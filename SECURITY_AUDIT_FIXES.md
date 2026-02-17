@@ -314,17 +314,17 @@
 
 - [x] **LOW**: Troubleshooting guide
   - Arquivo: `docs/TROUBLESHOOTING.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 0c6154a)
   - Solução: Complete troubleshooting reference
 
 - [x] **LOW**: Performance tuning guide
   - Arquivo: `docs/PERFORMANCE_TUNING.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 0c6154a)
   - Solução: Performance optimization strategies
 
 - [x] **LOW**: Contributing guide
   - Arquivo: `CONTRIBUTING.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 0c6154a)
   - Solução: Complete contribution guidelines
 
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
@@ -424,7 +424,7 @@
 **Commit 209a40a** - LOW Priority Documentation
 - ✅ 3 LOW: Rate limiting docs + Error codes docs + Deployment runbook
 
-**Commit PENDING** - LOW Priority Documentation (Batch 2)
+**Commit 0c6154a** - LOW Priority Documentation (Batch 2)
 - ✅ 3 LOW: Troubleshooting guide + Performance tuning + Contributing guide
 
 ---
