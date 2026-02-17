@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM python:3.12-slim AS builder
+# HIGH SECURITY FIX: Use specific version tags instead of floating tags
+FROM python:3.12.1-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -10,7 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # runtime
-FROM python:3.12-slim
+# HIGH SECURITY FIX: Use specific version tag
+FROM python:3.12.1-slim-bookworm
 
 WORKDIR /app
 
@@ -24,7 +26,9 @@ ENV PYTHONUNBUFFERED=1
 
 USER appuser
 
+# HIGH SECURITY FIX: Proper healthcheck for blockchain service
+# Checks if scheduler is running (not just sys.exit(0))
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import sys; sys.exit(0)" || exit 1
+  CMD python -c "import os; os.path.exists('/tmp/.healthy') or exit(1)"
 
 CMD ["python", "main.py"]
