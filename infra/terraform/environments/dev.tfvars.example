@@ -1,0 +1,20 @@
+# Development Environment Configuration
+
+project_id = "voketag-dev"
+region     = "us-central1"
+env        = "development"
+
+# Email for alerts
+sre_email = "dev@voketag.com.br"
+
+# PagerDuty (disabled in dev)
+pagerduty_service_key = ""
+
+# Cloud Run Configuration (cost-optimized for dev)
+scan_service_min_instances     = 0  # Scale to zero in dev
+scan_service_max_instances     = 2
+factory_service_min_instances  = 0
+factory_service_max_instances  = 2
+
+# Database (smaller tier for dev)
+# Note: Use db-f1-micro in dev, upgrade to db-custom-2-4096 in production
