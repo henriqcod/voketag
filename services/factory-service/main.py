@@ -6,11 +6,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from redis import Redis
 
 from config.settings import get_settings
 from api.routes import v1_router
 from api.middleware.request_id import RequestIDMiddleware
-from api.middleware.rate_limit_api_key import APIKeyRateLimitMiddleware
+from api.middleware.rate_limit_redis import RedisRateLimitMiddleware
 from api.middleware.structured_logging import StructuredLoggingMiddleware
 from tracing.otel import init_tracing
 
@@ -32,6 +33,14 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     init_tracing("factory-service")
+    
+    # Initialize Redis client for rate limiting
+    redis_client = Redis.from_url(
+        settings.redis_url,
+        decode_responses=False,  # We need bytes for Lua script
+        socket_timeout=settings.redis_timeout_ms / 1000.0,
+        socket_connect_timeout=settings.redis_timeout_ms / 1000.0,
+    )
 
     app = FastAPI(
         title="VokeTag Factory Service",
@@ -42,9 +51,16 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(StructuredLoggingMiddleware, service_name="factory-service")
+    
+    # Redis-based rate limiting (CRITICAL FIX: multi-instance safe)
     app.add_middleware(
-        APIKeyRateLimitMiddleware, requests_per_minute=settings.api_key_rate_limit
+        RedisRateLimitMiddleware,
+        redis_client=redis_client,
+        requests_per_minute=settings.api_key_rate_limit,
+        window_seconds=60,
+        fail_open=True  # Allow requests if Redis fails (resilience)
     )
+    
     app.add_middleware(RequestIDMiddleware)
     
     # CORS Configuration - CRITICAL SECURITY SETTING
