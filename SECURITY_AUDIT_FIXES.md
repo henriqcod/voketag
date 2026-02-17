@@ -192,10 +192,31 @@
   - Status: ✅ DONE (commit 44fd1f9)
   - Solução: Dynamic imports with Next.js + LAZY_LOADING.md guide + ScanForm example
 
-- [ ] **HIGH**: Melhorar tratamento de erros
+- [x] **HIGH**: Melhorar tratamento de erros
   - Arquivo: `frontend/app/hooks/useAuth.ts:35-53`
   - Status: ✅ DONE (commit 44fd1f9)
   - Solução: Token in httpOnly cookies + proper error handling + input validation
+
+### API Security (Factory Service)
+
+- [x] **HIGH**: Adicionar autenticação em todos os endpoints
+  - Arquivos:
+    - `services/factory-service/api/routes/products.py`
+    - `services/factory-service/api/routes/batches.py`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Added jwt_auth_required dependency to all 9 endpoints
+
+- [x] **HIGH**: Validar CSV upload (DoS prevention)
+  - Arquivo: `services/factory-service/api/routes/batches.py:30-38`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: File size limit (10MB) + MIME validation + UTF-8 validation
+
+- [x] **HIGH**: Corrigir paginação sem limites (DoS)
+  - Arquivos:
+    - `services/factory-service/api/routes/products.py:32`
+    - `services/factory-service/api/routes/batches.py:44`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Query validation (skip >= 0, 1 <= limit <= 100)
 
 ---
 
@@ -220,10 +241,10 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
-| HIGH      | 38    | 17        | 21       | 45% |
+| HIGH      | 38    | 20        | 18       | 53% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **36**  | **87**  | **29%** |
+| **TOTAL** | **123** | **39**  | **84**  | **32%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -277,6 +298,9 @@
 **Commit d847c57** - CRITICAL Security Fixes (localStorage + Encryption at Rest)
 - ✅ 1 CRITICAL: Removed all localStorage token usage (XSS prevention)
 - ✅ 1 CRITICAL: CMEK encryption at rest for Cloud SQL + Redis
+
+**Commit PENDING** - HIGH Priority API Security (Factory Service)
+- ✅ 3 HIGH: Authentication on all endpoints + CSV validation + Pagination limits
 
 ---
 
