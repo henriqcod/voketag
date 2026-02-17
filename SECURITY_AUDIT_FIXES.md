@@ -45,20 +45,30 @@
   - Status: PENDING
   - PR: #TBD
 
-- [ ] **CRITICAL**: Remover senhas hardcoded do docker-compose
+- [x] **CRITICAL**: Remover senhas hardcoded do docker-compose
   - Arquivo: `infra/docker/compose.yml:12-14, 25, 42`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit 3a1cc75)
+  - Solução: Substituído por variáveis de ambiente com .env.example
 
-- [ ] **CRITICAL**: Corrigir CORS permissivo (Factory Service)
-  - Arquivo: `services/factory-service/main.py:50-55`
-  - Status: PENDING
-  - PR: #TBD
-
-- [ ] **CRITICAL**: Adicionar autenticação Redis
+- [x] **CRITICAL**: Adicionar autenticação Redis
   - Arquivo: `infra/docker/compose.yml:4-7`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit 3a1cc75)
+  - Solução: Adicionado --requirepass com variável REDIS_PASSWORD
+
+- [x] **BONUS**: Portas expostas publicamente (HIGH → Fixed)
+  - Arquivo: `infra/docker/compose.yml`
+  - Status: ✅ DONE (commit 3a1cc75)
+  - Solução: Bind ports to 127.0.0.1 instead of 0.0.0.0
+
+- [x] **BONUS**: Missing healthchecks (MEDIUM → Fixed)
+  - Arquivo: `infra/docker/compose.yml`
+  - Status: ✅ DONE (commit 3a1cc75)
+  - Solução: Adicionado healthchecks em todos os serviços
+
+- [x] **CRITICAL**: Corrigir CORS permissivo (Factory Service)
+  - Arquivo: `services/factory-service/main.py:50-55`
+  - Status: ✅ DONE (commit d528734)
+  - Solução: Adicionado cors_origins configurável via env var, rejeitado "*" em produção
 
 ### Dia 5: Race Conditions & Data Loss
 
@@ -185,14 +195,25 @@
 
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
-| CRITICAL  | 28    | 2         | 26       | 7% |
-| HIGH      | 38    | 0         | 38       | 0% |
-| MEDIUM    | 40    | 0         | 40       | 0% |
+| CRITICAL  | 28    | 7         | 21       | 25% |
+| HIGH      | 38    | 1         | 37       | 3% |
+| MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **5**   | **118**  | **4%** |
+| **TOTAL** | **123** | **12**  | **111**  | **10%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17)
-- **Commit 6af4f47**: Fix compilation errors in scan-service (2 CRITICAL + 3 LOW)
+### ✅ Concluídos (Última Atualização: 2026-02-17 15:30)
+
+**Commit 6af4f47** - Compilation Errors (scan-service)
+- ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
+- ✅ 3 LOW: Funções redundantes simplificadas
+
+**Commit 3a1cc75** - Docker Security Hardening
+- ✅ 3 CRITICAL: Senhas hardcoded, Redis sem auth, Connection strings expostos
+- ✅ 1 HIGH: Portas expostas publicamente (0.0.0.0 → 127.0.0.1)
+- ✅ 1 MEDIUM: Healthchecks adicionados em todos os serviços
+
+**Commit d528734** - CORS Security Fix (factory-service)
+- ✅ 1 CRITICAL: CORS permissivo (["*"] + allow_credentials)
 
 ---
 
