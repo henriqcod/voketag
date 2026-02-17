@@ -274,17 +274,17 @@
 
 - [x] **MEDIUM**: Melhorar configurações de timeout (blockchain-service)
   - Arquivo: `services/blockchain-service/config/settings.py`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit e978d5e)
   - Solução: Added redis_timeout, shutdown_timeout, context_timeout
 
 - [x] **MEDIUM**: Corrigir admin-service (graceful shutdown + security headers)
   - Arquivo: `services/admin-service/app/index.js`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit e978d5e)
   - Solução: SIGTERM handling + security headers + timeouts
 
 - [x] **MEDIUM**: Pin Node.js version (admin-service)
   - Arquivo: `services/admin-service/Dockerfile`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit e978d5e)
   - Solução: node:20-slim → node:20.11.0-slim
 
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
@@ -374,7 +374,7 @@
 **Commit 7653e9d** - MEDIUM Priority Database & Validation
 - ✅ 2 MEDIUM: Database indexes (4 indexes) + Pydantic validations (3 models)
 
-**Commit PENDING** - MEDIUM Priority Service Improvements
+**Commit e978d5e** - MEDIUM Priority Service Improvements
 - ✅ 3 MEDIUM: Blockchain timeouts + Admin-service shutdown + Docker version pin
 
 ---
