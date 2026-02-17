@@ -214,12 +214,12 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 13        | 15       | 46% |
-| HIGH      | 38    | 11        | 27       | 29% |
+| HIGH      | 38    | 13        | 25       | 34% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **28**  | **95**  | **23%** |
+| **TOTAL** | **123** | **30**  | **93**  | **24%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17 19:30)
+### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
 **Commit 6af4f47** - Compilation Errors (scan-service)
 - ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
@@ -259,6 +259,10 @@
 **Commit fd9a36e** - Terraform Security Hardening
 - ✅ 2 HIGH: Deletion protection + Secret Manager for connection strings
 - ✅ BONUS: Externalized api_domain and sre_email variables
+
+**Commit dafb70b** - CI/CD Security Pipeline
+- ✅ 2 HIGH: Manual approval gates + Trivy vulnerability scanning
+- ✅ BONUS: Deploy all 4 services + health checks + documentation
 
 ---
 
