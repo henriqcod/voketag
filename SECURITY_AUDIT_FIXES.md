@@ -72,30 +72,34 @@
 
 ### Dia 5: Race Conditions & Data Loss
 
-- [ ] **CRITICAL**: Corrigir race condition no rate limiting (Factory Service)
+- [x] **CRITICAL**: Corrigir race condition no rate limiting (Factory Service)
   - Arquivo: `services/factory-service/api/middleware/rate_limit_api_key.py:11-33`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit 7e8f910)
+  - Solução: Implementado Redis-based rate limiting com Lua script atômico
 
-- [ ] **CRITICAL**: Implementar backup de hashes antes de anchor (Blockchain)
+- [x] **CRITICAL**: Implementar backup de hashes antes de anchor (Blockchain)
   - Arquivo: `services/blockchain-service/scheduler/runner.py:14-27`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit d19756c)
+  - Solução: Two-phase commit pattern com LRANGE + LTRIM
 
-- [ ] **CRITICAL**: Corrigir bug na prova Merkle (Blockchain)
+- [x] **CRITICAL**: Corrigir bug na prova Merkle (Blockchain)
   - Arquivo: `services/blockchain-service/merkle/proof.py:20`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit 163ad28)
+  - Solução: Duplicar nó corretamente quando índice par está no final
 
-- [ ] **CRITICAL**: Adicionar atomicidade Redis (Blockchain)
+- [x] **CRITICAL**: Adicionar atomicidade Redis (Blockchain)
   - Arquivo: `services/blockchain-service/storage/redis_store.py:22-30`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit d19756c)
+  - Solução: Implementado Redis pipeline para operações atômicas
 
-- [ ] **CRITICAL**: Corrigir connection leak (Factory Service)
+- [x] **CRITICAL**: Corrigir connection leak (Factory Service)
   - Arquivo: `services/factory-service/api/dependencies/container.py:11-27`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit 1c47922)
+  - Solução: Explicit finally block + pool_pre_ping + monitoring
+
+- [x] **BONUS**: Hash collision prevention (Blockchain)
+  - Status: ✅ DONE (commit 163ad28)
+  - Solução: Adicionado separator '|' em hash_pair
 
 ---
 
@@ -195,13 +199,13 @@
 
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
-| CRITICAL  | 28    | 7         | 21       | 25% |
+| CRITICAL  | 28    | 13        | 15       | 46% |
 | HIGH      | 38    | 1         | 37       | 3% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **12**  | **111**  | **10%** |
+| **TOTAL** | **123** | **18**  | **105**  | **15%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17 15:30)
+### ✅ Concluídos (Última Atualização: 2026-02-17 17:00)
 
 **Commit 6af4f47** - Compilation Errors (scan-service)
 - ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
@@ -214,6 +218,20 @@
 
 **Commit d528734** - CORS Security Fix (factory-service)
 - ✅ 1 CRITICAL: CORS permissivo (["*"] + allow_credentials)
+
+**Commit 7e8f910** - Rate Limiting Race Condition (factory-service)
+- ✅ 1 CRITICAL: In-memory rate limiting não thread-safe
+
+**Commit 163ad28** - Merkle Proof Bug + Hash Collision (blockchain-service)
+- ✅ 1 CRITICAL: Bug na geração de prova Merkle
+- ✅ 1 CRITICAL: Hash collision prevention (separator added)
+
+**Commit d19756c** - Hash Loss Prevention + Redis Atomicity (blockchain-service)
+- ✅ 1 CRITICAL: Perda de hashes em falha de anchor
+- ✅ 1 CRITICAL: Falta de atomicidade em operações Redis
+
+**Commit 1c47922** - Connection Leak Prevention (factory-service)
+- ✅ 1 CRITICAL: Connection leak em dependências
 
 ---
 
