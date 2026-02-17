@@ -46,12 +46,18 @@ def create_app() -> FastAPI:
         APIKeyRateLimitMiddleware, requests_per_minute=settings.api_key_rate_limit
     )
     app.add_middleware(RequestIDMiddleware)
+    
+    # CORS Configuration - CRITICAL SECURITY SETTING
+    # Use specific origins from settings, never ["*"] with credentials
+    cors_origins = settings.cors_origins_list
+    logger.info(f"CORS configured with origins: {cors_origins}")
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,  # Specific domains only, configured via CORS_ORIGINS env var
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],  # Explicit methods
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-CSRF-Token"],  # Explicit headers
     )
 
     app.include_router(v1_router, prefix="/v1", tags=["v1"])
