@@ -177,24 +177,24 @@
 
 - [x] **HIGH**: Corrigir CSP (remover unsafe-eval/unsafe-inline)
   - Arquivo: `frontend/app/middleware.ts:18-19`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 44fd1f9)
   - Solução: Strict CSP with nonce + removed unsafe-eval/unsafe-inline
 
 - [x] **HIGH**: Adicionar validação de entrada nos forms
   - Arquivos:
     - `frontend/app/components/ScanForm.tsx:12-13`
     - `frontend/app/hooks/useAuth.ts:35`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 44fd1f9)
   - Solução: UUID validation + email validation + password requirements + XSS sanitization
 
 - [x] **HIGH**: Implementar lazy loading
   - Arquivos: `frontend/app/app/*`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 44fd1f9)
   - Solução: Dynamic imports with Next.js + LAZY_LOADING.md guide + ScanForm example
 
 - [ ] **HIGH**: Melhorar tratamento de erros
   - Arquivo: `frontend/app/hooks/useAuth.ts:35-53`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 44fd1f9)
   - Solução: Token in httpOnly cookies + proper error handling + input validation
 
 ---
@@ -270,7 +270,7 @@
 - ✅ 2 HIGH: Manual approval gates + Trivy vulnerability scanning
 - ✅ BONUS: Deploy all 4 services + health checks + documentation
 
-**Commit PENDING** - Frontend Security Hardening
+**Commit 44fd1f9** - Frontend Security Hardening
 - ✅ 3 HIGH: CSP strict mode + Input validation + Lazy loading
 - ✅ 1 HIGH: Token security (httpOnly cookies) + Error handling
 
