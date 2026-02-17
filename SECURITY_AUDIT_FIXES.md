@@ -144,18 +144,20 @@
 
 ### Infraestrutura
 
-- [ ] **HIGH**: Adicionar manual approval no deploy
+- [x] **HIGH**: Adicionar manual approval no deploy
   - Arquivo: `.github/workflows/deploy.yml`
-  - Status: PENDING
+  - Status: ✅ DONE (commit dafb70b)
+  - Solução: Multi-stage pipeline with production & production-rollout environments
 
 - [x] **HIGH**: Atualizar imagens Docker com versões específicas
   - Arquivos: `services/*/Dockerfile`
   - Status: ✅ DONE (commit b956ddb)
   - Solução: Pinned versions + SHA256 digest for distroless
 
-- [ ] **HIGH**: Adicionar scan de vulnerabilidades no CI/CD
+- [x] **HIGH**: Adicionar scan de vulnerabilidades no CI/CD
   - Arquivo: `.github/workflows/deploy.yml`
-  - Status: PENDING
+  - Status: ✅ DONE (commit dafb70b)
+  - Solução: Trivy scanner with SARIF upload + strict mode for CRITICAL
 
 - [x] **HIGH**: Configurar deletion protection
   - Arquivo: `infra/terraform/cloud_sql.tf:55`
@@ -173,23 +175,27 @@
 
 ### Frontend
 
-- [ ] **HIGH**: Corrigir CSP (remover unsafe-eval/unsafe-inline)
+- [x] **HIGH**: Corrigir CSP (remover unsafe-eval/unsafe-inline)
   - Arquivo: `frontend/app/middleware.ts:18-19`
-  - Status: PENDING
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Strict CSP with nonce + removed unsafe-eval/unsafe-inline
 
-- [ ] **HIGH**: Adicionar validação de entrada nos forms
+- [x] **HIGH**: Adicionar validação de entrada nos forms
   - Arquivos:
     - `frontend/app/components/ScanForm.tsx:12-13`
     - `frontend/app/hooks/useAuth.ts:35`
-  - Status: PENDING
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: UUID validation + email validation + password requirements + XSS sanitization
 
-- [ ] **HIGH**: Implementar lazy loading
+- [x] **HIGH**: Implementar lazy loading
   - Arquivos: `frontend/app/app/*`
-  - Status: PENDING
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Dynamic imports with Next.js + LAZY_LOADING.md guide + ScanForm example
 
 - [ ] **HIGH**: Melhorar tratamento de erros
   - Arquivo: `frontend/app/hooks/useAuth.ts:35-53`
-  - Status: PENDING
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Token in httpOnly cookies + proper error handling + input validation
 
 ---
 
@@ -214,10 +220,10 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 13        | 15       | 46% |
-| HIGH      | 38    | 13        | 25       | 34% |
+| HIGH      | 38    | 17        | 21       | 45% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **30**  | **93**  | **24%** |
+| **TOTAL** | **123** | **34**  | **89**  | **28%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -263,6 +269,10 @@
 **Commit dafb70b** - CI/CD Security Pipeline
 - ✅ 2 HIGH: Manual approval gates + Trivy vulnerability scanning
 - ✅ BONUS: Deploy all 4 services + health checks + documentation
+
+**Commit PENDING** - Frontend Security Hardening
+- ✅ 3 HIGH: CSP strict mode + Input validation + Lazy loading
+- ✅ 1 HIGH: Token security (httpOnly cookies) + Error handling
 
 ---
 

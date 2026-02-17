@@ -12,20 +12,32 @@ export function middleware(request: NextRequest) {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   
-  // Content Security Policy
+  // HIGH SECURITY FIX: Strict CSP without unsafe-eval and unsafe-inline
+  // Generate nonce for inline scripts (if needed)
+  const nonce = generateNonce();
+  
+  // Content Security Policy - STRICT MODE
+  const apiDomain = process.env.NEXT_PUBLIC_API_URL || "https://api.voketag.com.br";
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
+    // HIGH FIX: Removed 'unsafe-eval' and 'unsafe-inline'
+    // Use nonce for inline scripts if absolutely necessary
+    `script-src 'self' 'nonce-${nonce}'`,
+    // Allow inline styles with hash or nonce for Next.js
+    `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://api.voketag.com.br",
+    `connect-src 'self' ${apiDomain}`,
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
+    "object-src 'none'",  // Block Flash, Java applets
+    "upgrade-insecure-requests",  // Force HTTPS
   ].join("; ");
   
   response.headers.set("Content-Security-Policy", csp);
+  // Store nonce for use in pages if needed
+  response.headers.set("X-Nonce", nonce);
 
   // Permissions Policy
   response.headers.set(
@@ -59,6 +71,15 @@ export function middleware(request: NextRequest) {
   }
 
   return response;
+}
+
+function generateNonce(): string {
+  // Generate cryptographically secure nonce for CSP
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID().replace(/-/g, "");
+  }
+  // Fallback: use timestamp + random
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
 function generateCSRFToken(): string {
