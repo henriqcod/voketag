@@ -289,12 +289,12 @@
 
 - [x] **MEDIUM**: Terraform state locking
   - Arquivo: `infra/terraform/main.tf`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 33c7595)
   - Solução: Added GCS backend with state locking
 
 - [x] **LOW**: Frontend bundle optimization
   - Arquivo: `frontend/app/next.config.js`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 33c7595)
   - Solução: Tree shaking + bundle analyzer support
 
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
@@ -387,9 +387,9 @@
 **Commit e978d5e** - MEDIUM Priority Service Improvements
 - ✅ 3 MEDIUM: Blockchain timeouts + Admin-service shutdown + Docker version pin
 
-**Commit PENDING** - LOW/MEDIUM Priority Final Fixes
+**Commit 33c7595** - LOW/MEDIUM Priority Final Fixes
 - ✅ 1 MEDIUM: Terraform state locking
-- ✅ 2 LOW: Context comments + Frontend bundle optimization
+- ✅ 2 LOW: Frontend bundle optimization + Comprehensive analysis docs
 
 ---
 
