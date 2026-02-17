@@ -107,13 +107,30 @@
 
 ### Backend
 
-- [ ] **HIGH**: Corrigir goroutine leak no rate limiter
+- [x] **HIGH**: Corrigir goroutine leak no rate limiter
   - Arquivo: `services/scan-service/internal/middleware/ratelimit.go:27`
-  - Status: PENDING
+  - Status: ✅ DONE (commit ec1041c)
+  - Solução: Added done channel + Stop() method
 
-- [ ] **HIGH**: Adicionar validação X-Forwarded-For
+- [x] **HIGH**: Adicionar validação X-Forwarded-For
   - Arquivo: `services/scan-service/internal/handler/scan.go:45-47`
-  - Status: PENDING
+  - Status: ✅ DONE (commit ec1041c)
+  - Solução: Extract first IP + fallback chain
+
+- [x] **HIGH**: Corrigir null pointer dereference
+  - Arquivo: `services/scan-service/internal/service/scan.go:127`
+  - Status: ✅ DONE (commit ec1041c)
+  - Solução: Check result != nil before use
+
+- [x] **HIGH**: Publisher não verifica erro de publicação
+  - Arquivo: `services/scan-service/internal/events/publisher.go:32`
+  - Status: ✅ DONE (commit ec1041c)
+  - Solução: Await result.Get() with timeout
+
+- [x] **HIGH**: Erros ignorados silenciosamente
+  - Arquivo: `services/scan-service/internal/service/scan.go:88,90,94,102`
+  - Status: ✅ DONE (commit ec1041c)
+  - Solução: Log all errors with proper context
 
 - [ ] **HIGH**: Corrigir IDOR em API keys
   - Arquivo: `services/factory-service/api/routes/api_keys.py:34-42`
@@ -123,27 +140,16 @@
   - Arquivo: `services/factory-service/core/auth/jwt.py:11-25`
   - Status: PENDING
 
-- [ ] **HIGH**: Corrigir null pointer dereference
-  - Arquivo: `services/scan-service/internal/service/scan.go:127`
-  - Status: PENDING
-
-- [ ] **HIGH**: Publisher não verifica erro de publicação
-  - Arquivo: `services/scan-service/internal/events/publisher.go:32`
-  - Status: PENDING
-
-- [ ] **HIGH**: Erros ignorados silenciosamente
-  - Arquivo: `services/scan-service/internal/service/scan.go:88,90,94,102`
-  - Status: PENDING
-
 ### Infraestrutura
 
 - [ ] **HIGH**: Adicionar manual approval no deploy
   - Arquivo: `.github/workflows/deploy.yml`
   - Status: PENDING
 
-- [ ] **HIGH**: Atualizar imagens Docker com versões específicas
+- [x] **HIGH**: Atualizar imagens Docker com versões específicas
   - Arquivos: `services/*/Dockerfile`
-  - Status: PENDING
+  - Status: ✅ DONE (commit b956ddb)
+  - Solução: Pinned versions + SHA256 digest for distroless
 
 - [ ] **HIGH**: Adicionar scan de vulnerabilidades no CI/CD
   - Arquivo: `.github/workflows/deploy.yml`
@@ -200,12 +206,12 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 13        | 15       | 46% |
-| HIGH      | 38    | 1         | 37       | 3% |
+| HIGH      | 38    | 7         | 31       | 18% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **18**  | **105**  | **15%** |
+| **TOTAL** | **123** | **24**  | **99**  | **20%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17 17:00)
+### ✅ Concluídos (Última Atualização: 2026-02-17 18:30)
 
 **Commit 6af4f47** - Compilation Errors (scan-service)
 - ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
@@ -232,6 +238,12 @@
 
 **Commit 1c47922** - Connection Leak Prevention (factory-service)
 - ✅ 1 CRITICAL: Connection leak em dependências
+
+**Commit ec1041c** - Scan Service HIGH Priority Fixes (Week 2 start)
+- ✅ 5 HIGH: Goroutine leak, X-Forwarded-For, null pointer, publisher errors, ignored errors
+
+**Commit b956ddb** - Docker Image Versioning
+- ✅ 1 HIGH: Imagens Docker com versões específicas (supply chain protection)
 
 ---
 
