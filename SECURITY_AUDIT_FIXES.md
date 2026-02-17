@@ -34,7 +34,7 @@
     - `frontend/app/lib/api-client.ts:32`
     - `frontend/app/hooks/useAuth.ts:17,44`
     - `frontend/app/lib/auth.ts:3`
-  - Status: ✅ DONE (commits 44fd1f9, PENDING)
+  - Status: ✅ DONE (commits 44fd1f9, d847c57)
   - Solução: Removed all localStorage.getItem("token"), tokens managed by httpOnly cookies
 
 - [x] **CRITICAL**: Adicionar encryption at rest (Cloud SQL + Redis)
@@ -42,7 +42,7 @@
     - `infra/terraform/cloud_sql.tf:16-56`
     - `infra/terraform/redis.tf:1-22`
     - `infra/terraform/multi_region.tf:20-54, 60-81`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit d847c57)
   - Solução: Customer-Managed Encryption Keys (CMEK) with KMS + TLS 1.2+ enforcement
 
 - [x] **CRITICAL**: Remover senhas hardcoded do docker-compose
@@ -274,7 +274,7 @@
 - ✅ 3 HIGH: CSP strict mode + Input validation + Lazy loading
 - ✅ 1 HIGH: Token security (httpOnly cookies) + Error handling
 
-**Commit PENDING** - CRITICAL Security Fixes (localStorage + Encryption at Rest)
+**Commit d847c57** - CRITICAL Security Fixes (localStorage + Encryption at Rest)
 - ✅ 1 CRITICAL: Removed all localStorage token usage (XSS prevention)
 - ✅ 1 CRITICAL: CMEK encryption at rest for Cloud SQL + Redis
 
