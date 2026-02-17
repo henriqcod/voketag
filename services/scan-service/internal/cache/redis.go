@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
+
+// ErrServiceOverloaded is returned when Redis connection pool is exhausted
+var ErrServiceOverloaded = errors.New("service overloaded: redis pool exhausted")
 
 type Client struct {
 	rdb    *redis.Client
@@ -116,6 +120,20 @@ func (c *Client) Get(ctx context.Context, tagID uuid.UUID) ([]byte, bool, error)
 	return val, true, nil
 }
 
+// isPoolExhausted checks if the error indicates Redis connection pool exhaustion
+func isPoolExhausted(err error) bool {
+	if err == nil {
+		return false
+	}
+	errMsg := err.Error()
+	return containsAny(errMsg, []string{
+		"pool timeout",
+		"connection pool exhausted",
+		"no free connection",
+		"all connections are busy",
+	})
+}
+
 // checkPoolExhaustion logs critical alert if Redis pool is exhausted
 func (c *Client) checkPoolExhaustion(err error) {
 	if err == nil {
@@ -134,20 +152,7 @@ func (c *Client) checkPoolExhaustion(err error) {
 // containsAny checks if string contains any of the substrings
 func containsAny(s string, substrs []string) bool {
 	for _, substr := range substrs {
-		if len(s) >= len(substr) && contains(s, substr) {
-			return true
-		}
-	}
-	return false
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && hasSubstr(s, substr))
-}
-
-func hasSubstr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
+		if strings.Contains(s, substr) {
 			return true
 		}
 	}
