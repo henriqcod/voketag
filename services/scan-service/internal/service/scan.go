@@ -85,21 +85,38 @@ func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string
 			if s.repo != nil {
 				if result.FirstScanAt == nil {
 					result.FirstScanAt = &now
-					_ = s.repo.UpdateFirstScanAndCount(ctx, tagID, now, result.ScanCount+1)
+					// HIGH FIX: Log error instead of ignoring
+					if err := s.repo.UpdateFirstScanAndCount(ctx, tagID, now, result.ScanCount+1); err != nil {
+						s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to update first scan and count")
+					}
 				} else {
-					_ = s.repo.IncrementScanCount(ctx, tagID)
+					// HIGH FIX: Log error instead of ignoring
+					if err := s.repo.IncrementScanCount(ctx, tagID); err != nil {
+						s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to increment scan count")
+					}
 				}
 			}
 			result.ScanCount++
-			_ = s.cache.SetScanResult(ctx, tagID, &result, s.ttl)
+			
+			// HIGH FIX: Log error instead of ignoring
+			if err := s.cache.SetScanResult(ctx, tagID, &result, s.ttl); err != nil {
+				s.logger.Warn().Err(err).Str("tag_id", tagID.String()).Msg("failed to update cache after scan")
+			}
 
 			event := map[string]interface{}{
 				"tag_id": tagID.String(),
 				"scan_count": result.ScanCount,
 				"first_scan_at": result.FirstScanAt,
 			}
-			evtBytes, _ := json.Marshal(event)
-			_ = s.publisher.PublishScanEvent(ctx, tagID, evtBytes)
+			evtBytes, err := json.Marshal(event)
+			if err != nil {
+				s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to marshal scan event")
+			} else {
+				// HIGH FIX: Log error from publisher
+				if err := s.publisher.PublishScanEvent(ctx, tagID, evtBytes); err != nil {
+					s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to publish scan event")
+				}
+			}
 
 			return &result, nil
 		}
@@ -123,26 +140,49 @@ func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string
 		}
 		return nil, err
 	}
+	
+	// HIGH FIX: Check for nil result to prevent null pointer dereference
+	if result == nil {
+		s.logger.Warn().Str("tag_id", tagID.String()).Msg("tag not found in database")
+		return nil, nil
+	}
 
 	now := time.Now()
 	if s.repo != nil {
 		if result.FirstScanAt == nil {
 			result.FirstScanAt = &now
-			_ = s.repo.UpdateFirstScanAndCount(ctx, tagID, now, result.ScanCount+1)
+			// HIGH FIX: Log error instead of ignoring
+			if err := s.repo.UpdateFirstScanAndCount(ctx, tagID, now, result.ScanCount+1); err != nil {
+				s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to update first scan and count")
+			}
 		} else {
-			_ = s.repo.IncrementScanCount(ctx, tagID)
+			// HIGH FIX: Log error instead of ignoring
+			if err := s.repo.IncrementScanCount(ctx, tagID); err != nil {
+				s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to increment scan count")
+			}
 		}
 	}
 	result.ScanCount++
-	_ = s.cache.SetScanResult(ctx, tagID, result, s.ttl)
+	
+	// HIGH FIX: Log error instead of ignoring
+	if err := s.cache.SetScanResult(ctx, tagID, result, s.ttl); err != nil {
+		s.logger.Warn().Err(err).Str("tag_id", tagID.String()).Msg("failed to cache scan result")
+	}
 
 	event := map[string]interface{}{
 		"tag_id": tagID.String(),
 		"scan_count": result.ScanCount,
 		"first_scan_at": result.FirstScanAt,
 	}
-	evtBytes, _ := json.Marshal(event)
-	_ = s.publisher.PublishScanEvent(ctx, tagID, evtBytes)
+	evtBytes, err := json.Marshal(event)
+	if err != nil {
+		s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to marshal scan event")
+	} else {
+		// HIGH FIX: Log error from publisher
+		if err := s.publisher.PublishScanEvent(ctx, tagID, evtBytes); err != nil {
+			s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to publish scan event")
+		}
+	}
 
 	return result, nil
 }

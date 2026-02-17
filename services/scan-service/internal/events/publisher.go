@@ -2,6 +2,8 @@ package events
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/google/uuid"
@@ -29,6 +31,21 @@ func (p *Publisher) PublishScanEvent(ctx context.Context, tagID uuid.UUID, event
 			"tag_id": tagID.String(),
 		},
 	}
-	_ = p.topic.Publish(ctx, msg)
+	
+	// HIGH SECURITY FIX: Properly check error from Publish()
+	// Publish() returns a *PublishResult which must be awaited
+	result := p.topic.Publish(ctx, msg)
+	
+	// Wait for publish to complete with timeout
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	
+	serverID, err := result.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to publish scan event for tag_id=%s: %w", tagID.String(), err)
+	}
+	
+	// Successfully published, serverID is the message ID from Pub/Sub
+	_ = serverID
 	return nil
 }
