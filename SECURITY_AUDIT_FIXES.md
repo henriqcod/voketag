@@ -239,17 +239,17 @@
 
 - [x] **HIGH**: Corrigir race condition no circuit breaker
   - Arquivo: `services/scan-service/internal/circuitbreaker/breaker.go`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 3bfe57a)
   - Solução: Atomic state checking with allowLocked() + proper locking
 
 - [x] **HIGH**: Adicionar monitoring e alertas
   - Arquivo: `infra/terraform/monitoring.tf`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 3bfe57a)
   - Solução: 7 alert policies + email/PagerDuty channels + dashboard
 
 - [x] **HIGH**: Documentar disaster recovery
   - Arquivo: `DISASTER_RECOVERY.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 3bfe57a)
   - Solução: Comprehensive DR plan with RTO/RPO + recovery procedures
 
 ---
@@ -339,7 +339,7 @@
 **Commit b499ab0** - HIGH Priority Infrastructure Improvements
 - ✅ 3 HIGH: Cloud Run timeouts + Redis HA + Cloud SQL tier upgrade
 
-**Commit PENDING** - HIGH Priority Monitoring & Reliability
+**Commit 3bfe57a** - HIGH Priority Monitoring & Reliability
 - ✅ 3 HIGH: Circuit breaker race condition + Monitoring/alerting + DR documentation
 
 ---
