@@ -132,13 +132,15 @@
   - Status: ✅ DONE (commit ec1041c)
   - Solução: Log all errors with proper context
 
-- [ ] **HIGH**: Corrigir IDOR em API keys
+- [x] **HIGH**: Corrigir IDOR em API keys
   - Arquivo: `services/factory-service/api/routes/api_keys.py:34-42`
-  - Status: PENDING
+  - Status: ✅ DONE (commit 3211c2b)
+  - Solução: Validate factory_id from JWT before returning/revoking API keys
 
-- [ ] **HIGH**: Implementar JWKS cache thread-safe
+- [x] **HIGH**: Implementar JWKS cache thread-safe
   - Arquivo: `services/factory-service/core/auth/jwt.py:11-25`
-  - Status: PENDING
+  - Status: ✅ DONE (commit 3211c2b)
+  - Solução: asyncio.Lock + double-checked locking + async client
 
 ### Infraestrutura
 
@@ -206,12 +208,12 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 13        | 15       | 46% |
-| HIGH      | 38    | 7         | 31       | 18% |
+| HIGH      | 38    | 9         | 29       | 24% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **24**  | **99**  | **20%** |
+| **TOTAL** | **123** | **26**  | **97**  | **21%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17 18:30)
+### ✅ Concluídos (Última Atualização: 2026-02-17 19:00)
 
 **Commit 6af4f47** - Compilation Errors (scan-service)
 - ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
@@ -244,6 +246,9 @@
 
 **Commit b956ddb** - Docker Image Versioning
 - ✅ 1 HIGH: Imagens Docker com versões específicas (supply chain protection)
+
+**Commit 3211c2b** - Factory-Service Authorization & JWKS (Week 2 complete)
+- ✅ 2 HIGH: IDOR prevention + JWKS thread-safe cache
 
 ---
 
