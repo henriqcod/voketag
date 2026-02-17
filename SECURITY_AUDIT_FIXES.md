@@ -287,6 +287,16 @@
   - Status: ✅ DONE (commit e978d5e)
   - Solução: node:20-slim → node:20.11.0-slim
 
+- [x] **MEDIUM**: Terraform state locking
+  - Arquivo: `infra/terraform/main.tf`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Added GCS backend with state locking
+
+- [x] **LOW**: Frontend bundle optimization
+  - Arquivo: `frontend/app/next.config.js`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Tree shaking + bundle analyzer support
+
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
 - [ ] **MEDIUM**: Implementar armazenamento de resposta no idempotency
 - [ ] **MEDIUM**: Adicionar healthchecks no docker-compose
@@ -305,9 +315,9 @@
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 26        | 12       | 68% |
-| MEDIUM    | 40    | 6         | 34       | 15% |
-| LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **50**  | **73**  | **41%** |
+| MEDIUM    | 40    | 7         | 33       | 18% |
+| LOW       | 17    | 5         | 12       | 29% |
+| **TOTAL** | **123** | **53**  | **70**  | **43%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -376,6 +386,10 @@
 
 **Commit e978d5e** - MEDIUM Priority Service Improvements
 - ✅ 3 MEDIUM: Blockchain timeouts + Admin-service shutdown + Docker version pin
+
+**Commit PENDING** - LOW/MEDIUM Priority Final Fixes
+- ✅ 1 MEDIUM: Terraform state locking
+- ✅ 2 LOW: Context comments + Frontend bundle optimization
 
 ---
 

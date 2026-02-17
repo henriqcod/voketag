@@ -70,6 +70,32 @@ const nextConfig = {
         tls: false,
       };
     }
+
+    // LOW FIX: Enable bundle optimization
+    // Production optimizations
+    if (process.env.NODE_ENV === "production") {
+      // Tree shaking for better bundle size
+      config.optimization = {
+        ...config.optimization,
+        usedExports: true,
+        sideEffects: false,
+      };
+    }
+
+    // Bundle analyzer (enable with ANALYZE=true)
+    if (process.env.ANALYZE === "true") {
+      const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: "static",
+          reportFilename: isServer
+            ? "../analyze/server.html"
+            : "./analyze/client.html",
+          openAnalyzer: false,
+        })
+      );
+    }
+
     return config;
   },
 };
