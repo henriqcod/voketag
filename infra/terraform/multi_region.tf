@@ -13,6 +13,58 @@ variable "secondary_region" {
   default     = "us-east1"
 }
 
+# HIGH SECURITY FIX: Externalize hardcoded values
+variable "api_domain" {
+  description = "API domain name"
+  type        = string
+  default     = "api.voketag.com.br"
+}
+
+variable "sre_email" {
+  description = "SRE team email for alerts"
+  type        = string
+  default     = "sre@voketag.com.br"
+}
+
+# ============================================================================
+# SECRET MANAGER - Connection Strings
+# ============================================================================
+
+resource "google_secret_manager_secret" "database_url_secondary" {
+  secret_id = "database-url-secondary"
+  
+  labels = {
+    environment = "production"
+    service     = "cloud-sql"
+    region      = var.secondary_region
+  }
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "database_url_secondary" {
+  secret = google_secret_manager_secret.database_url_secondary.id
+  
+  # Connection string will be set by Cloud SQL IAM authentication or manually
+  # Format: postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
+  secret_data = "postgresql://${google_sql_user.user.name}:${var.db_password}@${google_sql_database_instance.postgres_replica.private_ip_address}:5432/${google_sql_database.db.name}?sslmode=require"
+}
+
+# Grant Cloud Run service accounts access to secrets
+resource "google_secret_manager_secret_iam_member" "scan_service_secondary" {
+  secret_id = google_secret_manager_secret.database_url_secondary.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.scan_service.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "factory_service_secondary" {
+  secret_id = google_secret_manager_secret.database_url_secondary.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.factory_service.email}"
+}
+
 # ============================================================================
 # CLOUD SQL READ REPLICA (Secondary Region)
 # ============================================================================
@@ -110,7 +162,13 @@ resource "google_cloud_run_v2_service" "scan_service_secondary" {
 
       env {
         name  = "DATABASE_URL"
-        value = "postgres://..." # Read replica connection
+        # HIGH SECURITY FIX: Use Secret Manager instead of hardcoded connection string
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url_secondary.secret_id
+            version = "latest"
+          }
+        }
       }
 
       env {
@@ -164,7 +222,13 @@ resource "google_cloud_run_v2_service" "factory_service_secondary" {
 
       env {
         name  = "DATABASE_URL"
-        value = "postgres://..." # Read replica connection (can write after promotion)
+        # HIGH SECURITY FIX: Use Secret Manager instead of hardcoded connection string
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url_secondary.secret_id
+            version = "latest"
+          }
+        }
       }
 
       env {
@@ -217,7 +281,8 @@ resource "google_compute_managed_ssl_certificate" "default" {
   name = "voketag-cert"
 
   managed {
-    domains = ["api.voketag.com.br"]
+    # HIGH SECURITY FIX: Use variable instead of hardcoded domain
+    domains = [var.api_domain]
   }
 }
 
@@ -226,7 +291,8 @@ resource "google_compute_url_map" "default" {
   default_service = google_compute_backend_service.scan_primary.id
 
   host_rule {
-    hosts        = ["api.voketag.com.br"]
+    # HIGH SECURITY FIX: Use variable instead of hardcoded domain
+    hosts        = [var.api_domain]
     path_matcher = "allpaths"
   }
 
@@ -352,7 +418,8 @@ resource "google_monitoring_uptime_check_config" "primary_health" {
     type = "uptime_url"
     labels = {
       project_id = var.project_id
-      host       = "api.voketag.com.br"
+      # HIGH SECURITY FIX: Use variable instead of hardcoded domain
+      host       = var.api_domain
     }
   }
 }
@@ -384,7 +451,8 @@ resource "google_monitoring_notification_channel" "email" {
   type         = "email"
 
   labels = {
-    email_address = "sre@voketag.com.br"
+    # HIGH SECURITY FIX: Use variable instead of hardcoded email
+    email_address = var.sre_email
   }
 }
 

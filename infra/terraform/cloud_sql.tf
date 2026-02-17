@@ -52,7 +52,10 @@ resource "google_sql_database_instance" "main" {
     }
   }
 
-  deletion_protection = false
+  # HIGH SECURITY FIX: Enable deletion protection to prevent accidental deletion
+  # This is a critical database and should never be deleted accidentally
+  # To delete: set this to false, apply, then destroy
+  deletion_protection = true
 }
 
 resource "google_sql_database" "db" {
