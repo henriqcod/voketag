@@ -34,11 +34,39 @@ async def create_api_key(
 @router.get("/{api_key_id}", response_model=ApiKeyResponse)
 async def get_api_key(
     api_key_id: UUID,
+    request: Request,
     svc: ApiKeyService = Depends(get_api_key_service),
 ):
+    """
+    Get API key by ID with authorization check.
+    
+    HIGH SECURITY FIX: Prevents IDOR (Insecure Direct Object Reference).
+    Validates that the authenticated user has access to this API key.
+    """
     key = await svc.get_by_id(api_key_id)
     if not key:
         raise HTTPException(status_code=404, detail="API key not found")
+    
+    # HIGH SECURITY FIX: Check authorization
+    # Verify user has access to the factory_id associated with this API key
+    user_payload = getattr(request.state, "jwt_payload", None)
+    if user_payload:
+        # Extract factory_id from JWT claims
+        user_factory_id = user_payload.get("factory_id")
+        
+        # Verify API key belongs to user's factory
+        if key.factory_id and str(key.factory_id) != str(user_factory_id):
+            raise HTTPException(
+                status_code=403, 
+                detail="Access denied: API key belongs to different factory"
+            )
+    else:
+        # No JWT payload: require authentication
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required"
+        )
+    
     return key
 
 
@@ -48,6 +76,33 @@ async def revoke_api_key(
     request: Request,
     svc: ApiKeyService = Depends(get_api_key_service),
 ):
+    """
+    Revoke API key with authorization check.
+    
+    HIGH SECURITY FIX: Prevents IDOR (Insecure Direct Object Reference).
+    Validates that the authenticated user has access to this API key.
+    """
+    key = await svc.get_by_id(api_key_id)
+    if not key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    
+    # HIGH SECURITY FIX: Check authorization before revocation
+    user_payload = getattr(request.state, "jwt_payload", None)
+    if user_payload:
+        user_factory_id = user_payload.get("factory_id")
+        
+        # Verify API key belongs to user's factory
+        if key.factory_id and str(key.factory_id) != str(user_factory_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Cannot revoke API key from different factory"
+            )
+    else:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required"
+        )
+    
     ok = await svc.revoke(api_key_id)
     if not ok:
         raise HTTPException(status_code=404, detail="API key not found")
