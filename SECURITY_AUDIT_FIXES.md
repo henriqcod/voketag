@@ -297,6 +297,21 @@
   - Status: ✅ DONE (commit 33c7595)
   - Solução: Tree shaking + bundle analyzer support
 
+- [x] **LOW**: Rate limiting documentation
+  - Arquivo: `docs/RATE_LIMITING.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Comprehensive rate limit documentation
+
+- [x] **LOW**: Error codes documentation
+  - Arquivo: `docs/ERROR_CODES.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Complete error code reference
+
+- [x] **LOW**: Deployment runbook documentation
+  - Arquivo: `docs/DEPLOYMENT_RUNBOOK.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Complete deployment procedures
+
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
 - [ ] **MEDIUM**: Implementar armazenamento de resposta no idempotency
 - [ ] **MEDIUM**: Adicionar healthchecks no docker-compose
@@ -316,8 +331,8 @@
 | CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 26        | 12       | 68% |
 | MEDIUM    | 40    | 7         | 33       | 18% |
-| LOW       | 17    | 5         | 12       | 29% |
-| **TOTAL** | **123** | **53**  | **70**  | **43%** |
+| LOW       | 17    | 8         | 9        | 47% |
+| **TOTAL** | **123** | **56**  | **67**  | **46%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -390,6 +405,9 @@
 **Commit 33c7595** - LOW/MEDIUM Priority Final Fixes
 - ✅ 1 MEDIUM: Terraform state locking
 - ✅ 2 LOW: Frontend bundle optimization + Comprehensive analysis docs
+
+**Commit PENDING** - LOW Priority Documentation
+- ✅ 3 LOW: Rate limiting docs + Error codes docs + Deployment runbook
 
 ---
 
