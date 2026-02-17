@@ -312,6 +312,21 @@
   - Status: ✅ DONE (commit 209a40a)
   - Solução: Complete deployment procedures
 
+- [x] **LOW**: Troubleshooting guide
+  - Arquivo: `docs/TROUBLESHOOTING.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Complete troubleshooting reference
+
+- [x] **LOW**: Performance tuning guide
+  - Arquivo: `docs/PERFORMANCE_TUNING.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Performance optimization strategies
+
+- [x] **LOW**: Contributing guide
+  - Arquivo: `CONTRIBUTING.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Complete contribution guidelines
+
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
 - [ ] **MEDIUM**: Implementar armazenamento de resposta no idempotency
 - [ ] **MEDIUM**: Adicionar healthchecks no docker-compose
@@ -331,8 +346,8 @@
 | CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 26        | 12       | 68% |
 | MEDIUM    | 40    | 7         | 33       | 18% |
-| LOW       | 17    | 8         | 9        | 47% |
-| **TOTAL** | **123** | **56**  | **67**  | **46%** |
+| LOW       | 17    | 11        | 6        | 65% |
+| **TOTAL** | **123** | **59**  | **64**  | **48%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -408,6 +423,9 @@
 
 **Commit 209a40a** - LOW Priority Documentation
 - ✅ 3 LOW: Rate limiting docs + Error codes docs + Deployment runbook
+
+**Commit PENDING** - LOW Priority Documentation (Batch 2)
+- ✅ 3 LOW: Troubleshooting guide + Performance tuning + Contributing guide
 
 ---
 
