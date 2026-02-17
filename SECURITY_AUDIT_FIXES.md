@@ -256,13 +256,27 @@
 
 ## 🔧 SEMANA 4 - MEDIUM PRIORITY
 
+- [x] **MEDIUM**: Adicionar índices no banco de dados
+  - Arquivos:
+    - `services/factory-service/domain/api_keys/entities.py`
+    - `services/factory-service/domain/batch/entities.py`
+    - `services/factory-service/domain/product/entities.py`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Added indexes on key_hash, factory_id, product_id, sku
+
+- [x] **MEDIUM**: Adicionar validações Pydantic nos models
+  - Arquivos:
+    - `services/factory-service/domain/product/models.py`
+    - `services/factory-service/domain/batch/models.py`
+    - `services/factory-service/domain/api_keys/models.py`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Field validators for lengths, formats, ranges, whitespace
+
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
-- [ ] **MEDIUM**: Adicionar índices no banco de dados
 - [ ] **MEDIUM**: Implementar armazenamento de resposta no idempotency
 - [ ] **MEDIUM**: Adicionar healthchecks no docker-compose
 - [ ] **MEDIUM**: Consolidar sistema de tokens (Frontend)
 - [ ] **MEDIUM**: Habilitar TypeScript strict mode
-- [ ] **MEDIUM**: Corrigir race condition no circuit breaker
 - [ ] **MEDIUM**: Validação de limite em listagens
 - [ ] **MEDIUM**: Timeout muito baixo no Cloud Run (10s → 300s)
 - [ ] **MEDIUM**: Cloud SQL tier inadequado (db-f1-micro → custom)
@@ -276,9 +290,9 @@
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 26        | 12       | 68% |
-| MEDIUM    | 40    | 1         | 39       | 3% |
+| MEDIUM    | 40    | 3         | 37       | 8% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **45**  | **78**  | **37%** |
+| **TOTAL** | **123** | **47**  | **76**  | **38%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -341,6 +355,9 @@
 
 **Commit 3bfe57a** - HIGH Priority Monitoring & Reliability
 - ✅ 3 HIGH: Circuit breaker race condition + Monitoring/alerting + DR documentation
+
+**Commit PENDING** - MEDIUM Priority Database & Validation
+- ✅ 2 MEDIUM: Database indexes (4 indexes) + Pydantic validations (3 models)
 
 ---
 

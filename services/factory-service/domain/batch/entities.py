@@ -10,7 +10,10 @@ class Batch(Base):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     product_id = Column(
-        PG_UUID(as_uuid=True), ForeignKey("products.id"), nullable=False
+        PG_UUID(as_uuid=True), 
+        ForeignKey("products.id"), 
+        nullable=False,
+        index=True  # MEDIUM FIX: Add index for foreign key queries
     )
     name = Column(String(255), nullable=False)
     size = Column(Integer, default=0)
