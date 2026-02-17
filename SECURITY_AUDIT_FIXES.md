@@ -222,17 +222,17 @@
 
 - [x] **HIGH**: Corrigir timeout muito baixo no Cloud Run
   - Arquivo: `infra/terraform/cloud_run.tf`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit b499ab0)
   - Solução: scan-service 10s→60s, factory-service 10s→300s + health probes
 
 - [x] **HIGH**: Redis em modo BASIC (sem HA)
   - Arquivo: `infra/terraform/redis.tf`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit b499ab0)
   - Solução: BASIC→STANDARD_HA + replica_count=1 + read replicas
 
 - [x] **HIGH**: Cloud SQL tier inadequado (f1-micro)
   - Arquivo: `infra/terraform/cloud_sql.tf`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit b499ab0)
   - Solução: db-f1-micro→db-custom-2-4096 (2 vCPU, 4GB RAM)
 
 ---
@@ -319,7 +319,7 @@
 **Commit 2ab405d** - HIGH Priority API Security (Factory Service)
 - ✅ 3 HIGH: Authentication on all endpoints + CSV validation + Pagination limits
 
-**Commit PENDING** - HIGH Priority Infrastructure Improvements
+**Commit b499ab0** - HIGH Priority Infrastructure Improvements
 - ✅ 3 HIGH: Cloud Run timeouts + Redis HA + Cloud SQL tier upgrade
 
 ---
