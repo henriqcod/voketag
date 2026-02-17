@@ -34,18 +34,56 @@ func New(threshold, halfOpenMax int, resetTimeout time.Duration) *Breaker {
 }
 
 func (b *Breaker) Execute(fn func() error) error {
-	if !b.allow() {
+	// HIGH SECURITY FIX: Use single lock to prevent race condition
+	// Lock during allow() check and keep locked until record() completes
+	// This prevents race condition where state changes between allow() and record()
+	
+	b.mu.Lock()
+	
+	// Check if request is allowed
+	allowed := b.allowLocked()
+	if !allowed {
+		b.mu.Unlock()
 		return ErrCircuitOpen
 	}
+	
+	// Unlock before executing function (don't hold lock during I/O)
+	b.mu.Unlock()
+	
+	// Execute function
 	err := fn()
+	
+	// Record result
 	b.record(err)
 	return err
+}
+
+// allowLocked checks if request is allowed (must be called with lock held)
+func (b *Breaker) allowLocked() bool {
+	switch b.state {
+	case StateClosed:
+		return true
+	case StateOpen:
+		if time.Since(b.lastFailure) >= b.resetTimeout {
+			b.state = StateHalfOpen
+			b.successes = 0
+			return true
+		}
+		return false
+	case StateHalfOpen:
+		return b.successes < b.halfOpenMax
+	}
+	return false
 }
 
 func (b *Breaker) allow() bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	return b.allowLocked()
+}
 
+// allowLocked checks if request is allowed (must be called with lock held)
+func (b *Breaker) allowLocked() bool {
 	switch b.state {
 	case StateClosed:
 		return true

@@ -235,6 +235,23 @@
   - Status: ✅ DONE (commit b499ab0)
   - Solução: db-f1-micro→db-custom-2-4096 (2 vCPU, 4GB RAM)
 
+### Reliability & Monitoring
+
+- [x] **HIGH**: Corrigir race condition no circuit breaker
+  - Arquivo: `services/scan-service/internal/circuitbreaker/breaker.go`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Atomic state checking with allowLocked() + proper locking
+
+- [x] **HIGH**: Adicionar monitoring e alertas
+  - Arquivo: `infra/terraform/monitoring.tf`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: 7 alert policies + email/PagerDuty channels + dashboard
+
+- [x] **HIGH**: Documentar disaster recovery
+  - Arquivo: `DISASTER_RECOVERY.md`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Comprehensive DR plan with RTO/RPO + recovery procedures
+
 ---
 
 ## 🔧 SEMANA 4 - MEDIUM PRIORITY
@@ -258,10 +275,10 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
-| HIGH      | 38    | 23        | 15       | 61% |
+| HIGH      | 38    | 26        | 12       | 68% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **42**  | **81**  | **34%** |
+| **TOTAL** | **123** | **45**  | **78**  | **37%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -321,6 +338,9 @@
 
 **Commit b499ab0** - HIGH Priority Infrastructure Improvements
 - ✅ 3 HIGH: Cloud Run timeouts + Redis HA + Cloud SQL tier upgrade
+
+**Commit PENDING** - HIGH Priority Monitoring & Reliability
+- ✅ 3 HIGH: Circuit breaker race condition + Monitoring/alerting + DR documentation
 
 ---
 
