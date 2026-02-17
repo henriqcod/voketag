@@ -299,17 +299,17 @@
 
 - [x] **LOW**: Rate limiting documentation
   - Arquivo: `docs/RATE_LIMITING.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 209a40a)
   - Solução: Comprehensive rate limit documentation
 
 - [x] **LOW**: Error codes documentation
   - Arquivo: `docs/ERROR_CODES.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 209a40a)
   - Solução: Complete error code reference
 
 - [x] **LOW**: Deployment runbook documentation
   - Arquivo: `docs/DEPLOYMENT_RUNBOOK.md`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 209a40a)
   - Solução: Complete deployment procedures
 
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
@@ -406,7 +406,7 @@
 - ✅ 1 MEDIUM: Terraform state locking
 - ✅ 2 LOW: Frontend bundle optimization + Comprehensive analysis docs
 
-**Commit PENDING** - LOW Priority Documentation
+**Commit 209a40a** - LOW Priority Documentation
 - ✅ 3 LOW: Rate limiting docs + Error codes docs + Deployment runbook
 
 ---
