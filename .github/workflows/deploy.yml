@@ -7,12 +7,37 @@ on:
     types: [completed]
 
 jobs:
-  deploy:
+  # HIGH SECURITY FIX: Add manual approval before deployment
+  approval:
     if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      # GitHub environments require manual approval from designated reviewers
+      # Configure in: Settings → Environments → production → Required reviewers
+    steps:
+      - name: Wait for approval
+        run: |
+          echo "Deployment to production requires manual approval"
+          echo "Approved by: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+
+  # HIGH SECURITY FIX: Build, scan, and push Docker images
+  build:
+    needs: [approval]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+      security-events: write  # For Trivy sarif upload
+    
+    strategy:
+      matrix:
+        service: 
+          - scan-service
+          - factory-service
+          - blockchain-service
+          - admin-service
 
     steps:
       - uses: actions/checkout@v4
@@ -29,19 +54,137 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Build and Push scan-service
-        working-directory: voketag/services/scan-service
+      - name: Build Docker image
+        working-directory: services/${{ matrix.service }}
         run: |
-          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/voketag/scan-service:${{ github.sha }} .
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/voketag/scan-service:${{ github.sha }}
+          IMAGE=${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/voketag/${{ matrix.service }}:${{ github.sha }}
+          docker build -t $IMAGE .
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Deploy scan-service to Cloud Run
+      # HIGH SECURITY FIX: Scan images for vulnerabilities before deploy
+      - name: Run Trivy vulnerability scanner on Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail, just report
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+
+      # HIGH SECURITY FIX: Block deployment if CRITICAL vulnerabilities found
+      - name: Run Trivy vulnerability scanner (strict mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code: '1'  # Fail if CRITICAL vulnerabilities found
+          ignore-unfixed: true
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE }}
+
+  # Deploy services after successful build and scan
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    strategy:
+      matrix:
+        service:
+          - scan-service
+          - factory-service
+          - blockchain-service
+          - admin-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy ${{ matrix.service }} to Cloud Run
         run: |
-          gcloud run deploy scan-service \
-            --image=${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/voketag/scan-service:${{ github.sha }} \
+          gcloud run deploy ${{ matrix.service }} \
+            --image=${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/voketag/${{ matrix.service }}:${{ github.sha }} \
             --region=${{ env.REGION }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
-            --platform=managed
+            --platform=managed \
+            --no-traffic  # Deploy without traffic, manual rollout required
+
+      # Health check after deployment
+      - name: Health check ${{ matrix.service }}
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ matrix.service }} \
+            --region=${{ env.REGION }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          
+          echo "Service URL: $SERVICE_URL"
+          
+          # Wait for service to be ready (max 60s)
+          for i in {1..12}; do
+            if curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/v1/health" | grep -q "200"; then
+              echo "✅ Service is healthy"
+              exit 0
+            fi
+            echo "Waiting for service to be ready... ($i/12)"
+            sleep 5
+          done
+          
+          echo "❌ Service failed health check"
+          exit 1
+
+  # Rollout traffic gradually
+  rollout:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: production-rollout
+      # Requires second approval for traffic rollout
+
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Rollout traffic to new revision
+        run: |
+          echo "Rolling out traffic to all services..."
+          
+          for service in scan-service factory-service blockchain-service admin-service; do
+            echo "Rolling out $service..."
+            gcloud run services update-traffic $service \
+              --region=${{ env.REGION }} \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --to-latest
+          done
+          
+          echo "✅ Traffic rollout complete"
 
     env:
       REGION: us-central1
