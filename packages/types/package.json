@@ -1,0 +1,11 @@
+{
+  "name": "@voketag/types",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate": "openapi-typescript ../contracts/openapi/scan.yaml -o generated/scan.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.0.0"
+  }
+}

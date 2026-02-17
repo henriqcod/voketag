@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: voketag
+      POSTGRES_USER: voketag
+      POSTGRES_PASSWORD: voketag
+    ports:
+      - "5432:5432"
+
+  scan-service:
+    build: ../../services/scan-service
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      REDIS_ADDR: redis:6379
+      DATABASE_URL: postgres://voketag:voketag@postgres:5432/voketag
+    depends_on:
+      - redis
+      - postgres
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  factory-service:
+    build: ../../services/factory-service
+    ports:
+      - "8081:8080"
+    environment:
+      PORT: 8080
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgres://voketag:voketag@postgres:5432/voketag
+    depends_on:
+      - redis
+      - postgres
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  blockchain-service:
+    build: ../../services/blockchain-service
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  admin-service:
+    build: ../../services/admin-service
+    ports:
+      - "8082:8080"
+    environment:
+      PORT: 8080
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp

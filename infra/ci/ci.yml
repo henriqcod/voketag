@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Lint scan-service
+        working-directory: voketag/services/scan-service
+        run: go vet ./...
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lint factory-service
+        working-directory: voketag/services/factory-service
+        run: pip install ruff && ruff check .
+      - name: Lint blockchain-service
+        working-directory: voketag/services/blockchain-service
+        run: pip install ruff && ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test scan-service
+        working-directory: voketag/services/scan-service
+        run: go test ./...
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test factory-service
+        working-directory: voketag/services/factory-service
+        run: pip install -r requirements.txt pytest pytest-asyncio httpx && pytest tests/ -v
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "voketag"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          ignore-unfixed: true
+
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "auto"
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Terraform validate
+        run: terraform -chdir=voketag/infra/terraform init -backend=false && terraform -chdir=voketag/infra/terraform validate

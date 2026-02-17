@@ -1,0 +1,17 @@
+# Trivy configuration for container scanning
+# Block deploy on HIGH and CRITICAL vulnerabilities
+
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+
+vuln-type:
+  - os
+  - library
+
+ignore-unfixed: true
+
+timeout: 10m
+
+exit-code: 1  # Fail on vulnerabilities
