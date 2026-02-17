@@ -29,21 +29,21 @@
 
 ### Dia 3-4: Segurança Crítica
 
-- [ ] **CRITICAL**: Migrar tokens do localStorage para httpOnly cookies
+- [x] **CRITICAL**: Migrar tokens do localStorage para httpOnly cookies
   - Arquivos: 
     - `frontend/app/lib/api-client.ts:32`
     - `frontend/app/hooks/useAuth.ts:17,44`
-    - `frontend/app/store/authStore.ts:18-30`
-  - Status: PENDING
-  - PR: #TBD
+    - `frontend/app/lib/auth.ts:3`
+  - Status: ✅ DONE (commits 44fd1f9, PENDING)
+  - Solução: Removed all localStorage.getItem("token"), tokens managed by httpOnly cookies
 
-- [ ] **CRITICAL**: Adicionar encryption at rest (Cloud SQL + Redis)
+- [x] **CRITICAL**: Adicionar encryption at rest (Cloud SQL + Redis)
   - Arquivos:
     - `infra/terraform/cloud_sql.tf:16-56`
     - `infra/terraform/redis.tf:1-22`
     - `infra/terraform/multi_region.tf:20-54, 60-81`
-  - Status: PENDING
-  - PR: #TBD
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Customer-Managed Encryption Keys (CMEK) with KMS + TLS 1.2+ enforcement
 
 - [x] **CRITICAL**: Remover senhas hardcoded do docker-compose
   - Arquivo: `infra/docker/compose.yml:12-14, 25, 42`
@@ -219,11 +219,11 @@
 
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
-| CRITICAL  | 28    | 13        | 15       | 46% |
+| CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 17        | 21       | 45% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **34**  | **89**  | **28%** |
+| **TOTAL** | **123** | **36**  | **87**  | **29%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -273,6 +273,10 @@
 **Commit 44fd1f9** - Frontend Security Hardening
 - ✅ 3 HIGH: CSP strict mode + Input validation + Lazy loading
 - ✅ 1 HIGH: Token security (httpOnly cookies) + Error handling
+
+**Commit PENDING** - CRITICAL Security Fixes (localStorage + Encryption at Rest)
+- ✅ 1 CRITICAL: Removed all localStorage token usage (XSS prevention)
+- ✅ 1 CRITICAL: CMEK encryption at rest for Cloud SQL + Redis
 
 ---
 

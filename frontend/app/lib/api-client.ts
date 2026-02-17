@@ -4,8 +4,13 @@
  * Enterprise Security Features:
  * - XSS Protection (strict typing, no dangerouslySetInnerHTML)
  * - CSRF Protection (double submit cookie)
- * - JWT Authentication (in-memory access token)
- * - Secure token management
+ * - JWT Authentication (httpOnly cookie, managed by backend)
+ * - Secure token management (NO localStorage)
+ * 
+ * CRITICAL SECURITY FIX:
+ * - Tokens are stored in httpOnly cookies by the backend
+ * - JavaScript cannot access tokens (prevents XSS theft)
+ * - All requests use credentials: 'include' to send cookies
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -20,16 +25,6 @@ function getCSRFToken(): string | null {
   const cookies = document.cookie.split(";");
   const csrfCookie = cookies.find((c) => c.trim().startsWith("csrf_token="));
   return csrfCookie ? csrfCookie.split("=")[1] : null;
-}
-
-/**
- * Get auth token from localStorage (temporary - migrate to in-memory)
- */
-function getAuthToken(): string | null {
-  if (typeof localStorage === "undefined") {
-    return null;
-  }
-  return localStorage.getItem("auth_token");
 }
 
 export async function fetchScan(tagId: string) {
@@ -47,13 +42,12 @@ export async function fetchScan(tagId: string) {
  */
 export const apiClient = {
   async get<T>(path: string): Promise<T> {
-    const token = getAuthToken();
+    // CRITICAL SECURITY FIX: Token sent automatically via httpOnly cookie
     const response = await fetch(`${API_BASE}${path}`, {
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
-      credentials: "include",
+      credentials: "include", // Send httpOnly cookies
     });
     
     if (!response.ok) {
@@ -67,18 +61,17 @@ export const apiClient = {
   },
 
   async post<T>(path: string, data: unknown): Promise<T> {
-    const token = getAuthToken();
+    // CRITICAL SECURITY FIX: Token sent automatically via httpOnly cookie
     const csrfToken = getCSRFToken();
     
     const response = await fetch(`${API_BASE}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...(csrfToken && { "X-CSRF-Token": csrfToken }),
       },
       body: JSON.stringify(data),
-      credentials: "include",
+      credentials: "include", // Send httpOnly cookies
     });
     
     if (!response.ok) {
@@ -95,18 +88,17 @@ export const apiClient = {
   },
 
   async put<T>(path: string, data: unknown): Promise<T> {
-    const token = getAuthToken();
+    // CRITICAL SECURITY FIX: Token sent automatically via httpOnly cookie
     const csrfToken = getCSRFToken();
     
     const response = await fetch(`${API_BASE}${path}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...(csrfToken && { "X-CSRF-Token": csrfToken }),
       },
       body: JSON.stringify(data),
-      credentials: "include",
+      credentials: "include", // Send httpOnly cookies
     });
     
     if (!response.ok) {
@@ -120,17 +112,16 @@ export const apiClient = {
   },
 
   async delete(path: string): Promise<void> {
-    const token = getAuthToken();
+    // CRITICAL SECURITY FIX: Token sent automatically via httpOnly cookie
     const csrfToken = getCSRFToken();
     
     const response = await fetch(`${API_BASE}${path}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...(csrfToken && { "X-CSRF-Token": csrfToken }),
       },
-      credentials: "include",
+      credentials: "include", // Send httpOnly cookies
     });
     
     if (!response.ok) {
