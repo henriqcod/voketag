@@ -157,13 +157,19 @@
   - Arquivo: `.github/workflows/deploy.yml`
   - Status: PENDING
 
-- [ ] **HIGH**: Configurar deletion protection
+- [x] **HIGH**: Configurar deletion protection
   - Arquivo: `infra/terraform/cloud_sql.tf:55`
-  - Status: PENDING
+  - Status: ✅ DONE (commit fd9a36e)
+  - Solução: deletion_protection = true
 
-- [ ] **HIGH**: Remover hardcoded connection strings
+- [x] **HIGH**: Remover hardcoded connection strings
   - Arquivo: `infra/terraform/multi_region.tf:113,167`
-  - Status: PENDING
+  - Status: ✅ DONE (commit fd9a36e)
+  - Solução: Secret Manager + value_source.secret_key_ref
+
+- [x] **BONUS**: Externalize hardcoded domain and email
+  - Status: ✅ DONE (commit fd9a36e)
+  - Solução: Variables api_domain, sre_email + tfvars.example
 
 ### Frontend
 
@@ -208,12 +214,12 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 13        | 15       | 46% |
-| HIGH      | 38    | 9         | 29       | 24% |
+| HIGH      | 38    | 11        | 27       | 29% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **26**  | **97**  | **21%** |
+| **TOTAL** | **123** | **28**  | **95**  | **23%** |
 
-### ✅ Concluídos (Última Atualização: 2026-02-17 19:00)
+### ✅ Concluídos (Última Atualização: 2026-02-17 19:30)
 
 **Commit 6af4f47** - Compilation Errors (scan-service)
 - ✅ 2 CRITICAL: isPoolExhausted, ErrServiceOverloaded não definidos
@@ -249,6 +255,10 @@
 
 **Commit 3211c2b** - Factory-Service Authorization & JWKS (Week 2 complete)
 - ✅ 2 HIGH: IDOR prevention + JWKS thread-safe cache
+
+**Commit fd9a36e** - Terraform Security Hardening
+- ✅ 2 HIGH: Deletion protection + Secret Manager for connection strings
+- ✅ BONUS: Externalized api_domain and sre_email variables
 
 ---
 
