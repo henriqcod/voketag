@@ -203,19 +203,19 @@
   - Arquivos:
     - `services/factory-service/api/routes/products.py`
     - `services/factory-service/api/routes/batches.py`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 2ab405d)
   - Solução: Added jwt_auth_required dependency to all 9 endpoints
 
 - [x] **HIGH**: Validar CSV upload (DoS prevention)
   - Arquivo: `services/factory-service/api/routes/batches.py:30-38`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 2ab405d)
   - Solução: File size limit (10MB) + MIME validation + UTF-8 validation
 
 - [x] **HIGH**: Corrigir paginação sem limites (DoS)
   - Arquivos:
     - `services/factory-service/api/routes/products.py:32`
     - `services/factory-service/api/routes/batches.py:44`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 2ab405d)
   - Solução: Query validation (skip >= 0, 1 <= limit <= 100)
 
 ---
@@ -299,7 +299,7 @@
 - ✅ 1 CRITICAL: Removed all localStorage token usage (XSS prevention)
 - ✅ 1 CRITICAL: CMEK encryption at rest for Cloud SQL + Redis
 
-**Commit PENDING** - HIGH Priority API Security (Factory Service)
+**Commit 2ab405d** - HIGH Priority API Security (Factory Service)
 - ✅ 3 HIGH: Authentication on all endpoints + CSV validation + Pagination limits
 
 ---
