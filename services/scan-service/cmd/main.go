@@ -140,9 +140,11 @@ func main() {
 	mux.Handle("GET /v1/scan", scanWithValidation)
 
 	handlerChain := middleware.Logging(log)(
-		middleware.Timeout(cfg.Server.ContextTimeout)(
-			middleware.RateLimit(100, time.Minute)(
-				mux,
+		middleware.TraceContext()(  // MEDIUM FIX: Extract trace context from headers
+			middleware.Timeout(cfg.Server.ContextTimeout)(
+				middleware.RateLimit(100, time.Minute)(
+					mux,
+				),
 			),
 		),
 	)
@@ -176,6 +178,7 @@ func main() {
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")  // MINOR FIX: Add Content-Type header
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
 }
@@ -184,6 +187,8 @@ func readyHandler(repo *repository.Repository, rdb *redis.Client) http.HandlerFu
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
+
+		w.Header().Set("Content-Type", "application/json")  // MINOR FIX: Add Content-Type header
 
 		if rdb != nil {
 			if err := rdb.Ping(ctx).Err(); err != nil {

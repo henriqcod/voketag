@@ -77,14 +77,14 @@ func (rl *rateLimiter) Allow(key string) bool {
 
 // extractClientIP extracts the real client IP from request headers.
 //
-// HIGH SECURITY FIX: Validates X-Forwarded-For to prevent IP spoofing.
+// MEDIUM FIX: Enhanced to handle edge cases and validate IPs.
 // Only uses the FIRST IP in X-Forwarded-For (leftmost = original client).
 // Falls back to X-Real-IP, then RemoteAddr.
 //
 // Security notes:
 // - Trusts only the first IP in X-Forwarded-For chain
-// - Strips any leading/trailing whitespace
-// - Does not trust RemoteAddr alone (can be spoofed by proxies)
+// - Strips port number from RemoteAddr
+// - Validates IP format to prevent injection
 func extractClientIP(r *http.Request) string {
 	// Priority 1: X-Forwarded-For (first IP only - the original client)
 	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
@@ -105,7 +105,13 @@ func extractClientIP(r *http.Request) string {
 	}
 	
 	// Priority 3: RemoteAddr (fallback, may be proxy IP)
-	return r.RemoteAddr
+	// RemoteAddr format can be "IP:port", strip port
+	remoteAddr := r.RemoteAddr
+	if idx := strings.LastIndex(remoteAddr, ":"); idx != -1 {
+		// IPv4 or IPv6 with port, strip port
+		return remoteAddr[:idx]
+	}
+	return remoteAddr
 }
 
 func RateLimit(limit int, window time.Duration) func(next http.Handler) http.Handler {
