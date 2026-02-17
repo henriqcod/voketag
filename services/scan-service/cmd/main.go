@@ -19,6 +19,7 @@ import (
 	"github.com/voketag/scan-service/internal/circuitbreaker"
 	"github.com/voketag/scan-service/internal/events"
 	"github.com/voketag/scan-service/internal/handler"
+	"github.com/voketag/scan-service/internal/metrics"  // LOW ENHANCEMENT: Custom metrics
 	"github.com/voketag/scan-service/internal/middleware"
 	"github.com/voketag/scan-service/internal/repository"
 	"github.com/voketag/scan-service/internal/service"
@@ -51,6 +52,13 @@ func main() {
 		log.Warn().Err(err).Msg("tracing init failed - continuing without tracing")
 	} else {
 		defer shutdownTracing()
+	}
+
+	// LOW ENHANCEMENT: Initialize custom metrics
+	if err := metrics.InitMetrics(); err != nil {
+		log.Warn().Err(err).Msg("metrics init failed - continuing without custom metrics")
+	} else {
+		log.Info().Msg("custom metrics initialized")
 	}
 
 	redisCB := circuitbreaker.New(5, 2, 30*time.Second)

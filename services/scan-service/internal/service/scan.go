@@ -12,6 +12,7 @@ import (
 	"github.com/voketag/scan-service/internal/antifraud"
 	"github.com/voketag/scan-service/internal/cache"
 	"github.com/voketag/scan-service/internal/circuitbreaker"
+	"github.com/voketag/scan-service/internal/metrics"  // LOW ENHANCEMENT: Custom metrics
 	"github.com/voketag/scan-service/internal/model"
 	"github.com/voketag/scan-service/internal/repository"
 )
@@ -53,12 +54,17 @@ func NewScanService(
 }
 
 func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string) (*model.ScanResult, error) {
+	startTime := time.Now()  // LOW ENHANCEMENT: Track scan duration
+	
 	risk, err := s.antifraud.Evaluate(ctx, tagID, clientIP)
+	metrics.RecordAntifraudEvaluation(ctx, risk.String())  // LOW ENHANCEMENT: Record evaluation
+	
 	if err != nil {
 		return nil, err
 	}
 	if risk == antifraud.RiskHigh {
 		s.logger.Warn().Str("tag_id", tagID.String()).Str("ip", clientIP).Msg("antifraud blocked")
+		metrics.RecordAntifraudBlocked(ctx, "high_risk")  // LOW ENHANCEMENT: Record block
 		return nil, nil
 	}
 
@@ -79,6 +85,7 @@ func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string
 		}
 	}
 	if hit && len(val) > 0 {
+		metrics.RecordCacheHit(ctx)  // LOW ENHANCEMENT: Record cache hit
 		var result model.ScanResult
 		if err := json.Unmarshal(val, &result); err == nil {
 			now := time.Now()
@@ -118,9 +125,14 @@ func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string
 				}
 			}
 
+			metrics.RecordScan(ctx, tagID.String(), time.Since(startTime))  // LOW ENHANCEMENT: Record scan
+
 			return &result, nil
 		}
 	}
+
+	// Cache miss
+	metrics.RecordCacheMiss(ctx)  // LOW ENHANCEMENT: Record cache miss
 
 	if s.repo == nil {
 		s.logger.Error().Str("tag_id", tagID.String()).Msg("postgres unavailable - cache miss cannot be resolved")
@@ -183,6 +195,8 @@ func (s *ScanService) Scan(ctx context.Context, tagID uuid.UUID, clientIP string
 			s.logger.Error().Err(err).Str("tag_id", tagID.String()).Msg("failed to publish scan event")
 		}
 	}
+
+	metrics.RecordScan(ctx, tagID.String(), time.Since(startTime))  // LOW ENHANCEMENT: Record scan
 
 	return result, nil
 }
