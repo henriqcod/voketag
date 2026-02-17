@@ -269,8 +269,23 @@
     - `services/factory-service/domain/product/models.py`
     - `services/factory-service/domain/batch/models.py`
     - `services/factory-service/domain/api_keys/models.py`
-  - Status: ✅ DONE (commit PENDING)
+  - Status: ✅ DONE (commit 7653e9d)
   - Solução: Field validators for lengths, formats, ranges, whitespace
+
+- [x] **MEDIUM**: Melhorar configurações de timeout (blockchain-service)
+  - Arquivo: `services/blockchain-service/config/settings.py`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: Added redis_timeout, shutdown_timeout, context_timeout
+
+- [x] **MEDIUM**: Corrigir admin-service (graceful shutdown + security headers)
+  - Arquivo: `services/admin-service/app/index.js`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: SIGTERM handling + security headers + timeouts
+
+- [x] **MEDIUM**: Pin Node.js version (admin-service)
+  - Arquivo: `services/admin-service/Dockerfile`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: node:20-slim → node:20.11.0-slim
 
 - [ ] **MEDIUM**: Refatorar código duplicado (scan count update)
 - [ ] **MEDIUM**: Implementar armazenamento de resposta no idempotency
@@ -290,9 +305,9 @@
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
 | HIGH      | 38    | 26        | 12       | 68% |
-| MEDIUM    | 40    | 3         | 37       | 8% |
+| MEDIUM    | 40    | 6         | 34       | 15% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **47**  | **76**  | **38%** |
+| **TOTAL** | **123** | **50**  | **73**  | **41%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -358,6 +373,9 @@
 
 **Commit 7653e9d** - MEDIUM Priority Database & Validation
 - ✅ 2 MEDIUM: Database indexes (4 indexes) + Pydantic validations (3 models)
+
+**Commit PENDING** - MEDIUM Priority Service Improvements
+- ✅ 3 MEDIUM: Blockchain timeouts + Admin-service shutdown + Docker version pin
 
 ---
 
