@@ -6,7 +6,7 @@ resource "google_cloud_run_v2_service" "scan_service" {
     service_account = google_service_account.scan_service.email
     max_instance_count = 10
     min_instance_count = 0
-    timeout            = "10s"
+    timeout            = "60s"  # HIGH FIX: Increased from 10s to 60s for reliability
 
     scaling {
       min_instance_count = 0
@@ -24,6 +24,29 @@ resource "google_cloud_run_v2_service" "scan_service" {
           memory = "512Mi"
         }
         cpu_idle = true
+      }
+      
+      # HIGH SECURITY FIX: Set explicit startup and liveness probes
+      startup_probe {
+        http_get {
+          path = "/v1/health"
+          port = 8080
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 3
+        period_seconds        = 10
+        failure_threshold     = 3
+      }
+      
+      liveness_probe {
+        http_get {
+          path = "/v1/health"
+          port = 8080
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 3
+        period_seconds        = 30
+        failure_threshold     = 3
       }
     }
 
@@ -46,7 +69,7 @@ resource "google_cloud_run_v2_service" "factory_service" {
     service_account = google_service_account.factory_service.email
     max_instance_count = 5
     min_instance_count = 0
-    timeout            = "10s"
+    timeout            = "300s"  # HIGH FIX: Increased from 10s to 300s (CSV processing needs time)
 
     scaling {
       min_instance_count = 0
@@ -64,6 +87,29 @@ resource "google_cloud_run_v2_service" "factory_service" {
           memory = "1Gi"
         }
         cpu_idle = false
+      }
+      
+      # HIGH SECURITY FIX: Set explicit startup and liveness probes
+      startup_probe {
+        http_get {
+          path = "/v1/health"
+          port = 8000
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 3
+        period_seconds        = 10
+        failure_threshold     = 3
+      }
+      
+      liveness_probe {
+        http_get {
+          path = "/v1/health"
+          port = 8000
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 3
+        period_seconds        = 30
+        failure_threshold     = 3
       }
     }
 

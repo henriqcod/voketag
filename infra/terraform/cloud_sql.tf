@@ -24,7 +24,7 @@ resource "google_sql_database_instance" "main" {
   encryption_key_name = google_kms_crypto_key.sql_key.id
 
   settings {
-    tier = "db-f1-micro"
+    tier = "db-custom-2-4096"  # HIGH FIX: Changed from db-f1-micro to custom tier (2 vCPU, 4GB RAM)
 
     backup_configuration {
       enabled                        = true

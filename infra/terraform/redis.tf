@@ -1,6 +1,6 @@
 resource "google_redis_instance" "main" {
   name           = "voketag-redis"
-  tier           = "BASIC"
+  tier           = "STANDARD_HA"  # HIGH FIX: Changed from BASIC to STANDARD_HA for high availability
   memory_size_gb = 1
   region         = var.region
 
@@ -9,6 +9,10 @@ resource "google_redis_instance" "main" {
   redis_version     = "REDIS_7_0"
   display_name      = "VokeTag Redis"
   reserved_ip_range = "10.0.0.0/29"
+  
+  # HIGH FIX: Enable automatic failover for STANDARD_HA tier
+  replica_count = 1  # One replica for failover
+  read_replicas_mode = "READ_REPLICAS_ENABLED"
   
   # CRITICAL SECURITY FIX: Enable in-transit encryption (TLS)
   transit_encryption_mode = "SERVER_AUTHENTICATION"

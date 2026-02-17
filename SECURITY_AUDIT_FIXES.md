@@ -218,6 +218,23 @@
   - Status: ✅ DONE (commit 2ab405d)
   - Solução: Query validation (skip >= 0, 1 <= limit <= 100)
 
+### Infrastructure
+
+- [x] **HIGH**: Corrigir timeout muito baixo no Cloud Run
+  - Arquivo: `infra/terraform/cloud_run.tf`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: scan-service 10s→60s, factory-service 10s→300s + health probes
+
+- [x] **HIGH**: Redis em modo BASIC (sem HA)
+  - Arquivo: `infra/terraform/redis.tf`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: BASIC→STANDARD_HA + replica_count=1 + read replicas
+
+- [x] **HIGH**: Cloud SQL tier inadequado (f1-micro)
+  - Arquivo: `infra/terraform/cloud_sql.tf`
+  - Status: ✅ DONE (commit PENDING)
+  - Solução: db-f1-micro→db-custom-2-4096 (2 vCPU, 4GB RAM)
+
 ---
 
 ## 🔧 SEMANA 4 - MEDIUM PRIORITY
@@ -241,10 +258,10 @@
 | Categoria | Total | Concluído | Pendente | % |
 |-----------|-------|-----------|----------|---|
 | CRITICAL  | 28    | 15        | 13       | 54% |
-| HIGH      | 38    | 20        | 18       | 53% |
+| HIGH      | 38    | 23        | 15       | 61% |
 | MEDIUM    | 40    | 1         | 39       | 3% |
 | LOW       | 17    | 3         | 14       | 18% |
-| **TOTAL** | **123** | **39**  | **84**  | **32%** |
+| **TOTAL** | **123** | **42**  | **81**  | **34%** |
 
 ### ✅ Concluídos (Última Atualização: 2026-02-17 20:00)
 
@@ -301,6 +318,9 @@
 
 **Commit 2ab405d** - HIGH Priority API Security (Factory Service)
 - ✅ 3 HIGH: Authentication on all endpoints + CSV validation + Pagination limits
+
+**Commit PENDING** - HIGH Priority Infrastructure Improvements
+- ✅ 3 HIGH: Cloud Run timeouts + Redis HA + Cloud SQL tier upgrade
 
 ---
 
