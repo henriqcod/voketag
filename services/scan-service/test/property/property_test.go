@@ -175,8 +175,9 @@ func TestAntifraud_Properties(t *testing.T) {
 			}
 
 			// Evaluate twice with same inputs
-			risk1, err1 := antifraud.Evaluate(context.Background(), tagID, clientIP)
-			risk2, err2 := antifraud.Evaluate(context.Background(), tagID, clientIP)
+			// TODO: Use context.TODO() in tests as context.Background() has no deadline
+			risk1, err1 := antifraud.Evaluate(context.TODO(), tagID, clientIP)
+			risk2, err2 := antifraud.Evaluate(context.TODO(), tagID, clientIP)
 
 			// Should get same result
 			return risk1 == risk2 && (err1 == nil && err2 == nil || err1 != nil && err2 != nil)
@@ -192,7 +193,8 @@ func TestAntifraud_Properties(t *testing.T) {
 				clientIP = "192.168.1.1"
 			}
 
-			risk, err := antifraud.Evaluate(context.Background(), tagID, clientIP)
+			// TODO: Use context.TODO() in tests as context.Background() has no deadline
+			risk, err := antifraud.Evaluate(context.TODO(), tagID, clientIP)
 			if err != nil {
 				return true // Errors are OK
 			}
@@ -229,7 +231,8 @@ func TestCache_Properties(t *testing.T) {
 	// Property: What goes in must come out (before expiration)
 	properties.Property("cache roundtrip", prop.ForAll(
 		func(tagID uuid.UUID, count int) bool {
-			ctx := context.Background()
+			// TODO: Use context.TODO() in tests as context.Background() has no deadline
+			ctx := context.TODO()
 			cache := NewInMemoryCache() // Use in-memory for testing
 
 			result := &model.ScanResult{
@@ -261,7 +264,8 @@ func TestCache_Properties(t *testing.T) {
 	// Property: Cache miss returns (nil, false, nil)
 	properties.Property("cache miss behavior", prop.ForAll(
 		func(tagID uuid.UUID) bool {
-			ctx := context.Background()
+			// TODO: Use context.TODO() in tests as context.Background() has no deadline
+			ctx := context.TODO()
 			cache := NewInMemoryCache()
 
 			// Get non-existent key
@@ -276,7 +280,8 @@ func TestCache_Properties(t *testing.T) {
 	// Property: Expired entries are not returned
 	properties.Property("expiration works", prop.ForAll(
 		func(tagID uuid.UUID) bool {
-			ctx := context.Background()
+			// TODO: Use context.TODO() in tests as context.Background() has no deadline
+			ctx := context.TODO()
 			cache := NewInMemoryCache()
 
 			result := &model.ScanResult{
