@@ -1,0 +1,49 @@
+# Monitoring stack - Prometheus, Grafana, Celery Flower
+# Usage: docker compose -f compose.yml -f compose.monitoring.yml up -d
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    depends_on:
+      - scan-service
+      - factory-service
+      - admin-service
+      - blockchain-service
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    ports:
+      - "127.0.0.1:3004:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3004
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+  flower:
+    image: mher/flower:2.0.1
+    ports:
+      - "127.0.0.1:5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      - FLOWER_BASIC_AUTH=admin:${FLOWER_PASSWORD:-flower}
+    depends_on:
+      - redis
+      - factory-worker
+
+volumes:
+  grafana-data:

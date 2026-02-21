@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: VokeTag Scan API
+  version: 1.0.0
+paths:
+  /v1/scan/{tag_id}:
+    get:
+      summary: Escanear tag
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Resultado do scan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+        '400':
+          description: UUID inválido
+        '429':
+          description: Rate limit excedido
+
+components:
+  schemas:
+    ScanResult:
+      type: object
+      properties:
+        tag_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        batch_id:
+          type: string
+          format: uuid
+        first_scan_at:
+          type: string
+          format: date-time
+        scan_count:
+          type: integer
+        valid:
+          type: boolean

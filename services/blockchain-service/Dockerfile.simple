@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12.1-slim-bookworm
+
+WORKDIR /app
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Create a simple Flask app for testing
+COPY <<EOF /app/app.py
+from flask import Flask, jsonify, request
+import datetime
+import os
+
+app = Flask(__name__)
+
+@app.route('/health')
+@app.route('/ready')
+def health():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.datetime.now().isoformat(),
+        'service': 'blockchain-service'
+    })
+
+@app.route('/v1/verify', methods=['POST'])
+def verify():
+    return jsonify({
+        'message': 'Blockchain verification',
+        'timestamp': datetime.datetime.now().isoformat(),
+        'verified': True,
+        'data': request.get_json() if request.is_json else {}
+    })
+
+@app.route('/v1/store', methods=['POST'])
+def store():
+    return jsonify({
+        'message': 'Data stored on blockchain',
+        'timestamp': datetime.datetime.now().isoformat(),
+        'transaction_id': 'mock_tx_123456',
+        'data': request.get_json() if request.is_json else {}
+    })
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False)
+EOF
+
+# Install Flask
+RUN pip install --no-cache-dir flask
+
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"
+
+CMD ["python", "app.py"]

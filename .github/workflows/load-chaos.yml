@@ -1,0 +1,76 @@
+# ENH-7 (Load) and ENH-8 (Chaos): optional scheduled and manual runs.
+# E2E is in ci.yml; load and chaos run against a live/staging URL (set in secrets or env).
+
+name: Load & Chaos
+
+on:
+  schedule:
+    # Load: weekly Sunday 02:00 UTC; Chaos: Wednesday 10:00 UTC
+    - cron: "0 2 * * 0"
+    - cron: "0 10 * * 3"
+  workflow_dispatch:
+    inputs:
+      run_load:
+        description: "Run load tests (k6)"
+        required: false
+        default: true
+        type: boolean
+      run_chaos:
+        description: "Run chaos experiments"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  load:
+    name: Load (k6)
+    if: ${{ github.event_name == 'schedule' && github.event.schedule == '0 2 * * 0' || github.event.inputs.run_load != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          curl -L https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz | tar xvz
+          sudo mv k6-v0.47.0-linux-amd64/k6 /usr/local/bin/
+
+      - name: Run load test (scan-service)
+        run: |
+          k6 run tests/load/scan-service.js \
+            --vus 10 \
+            --duration 1m \
+            --env BASE_URL=${{ secrets.STAGING_URL || 'http://localhost:8080' }} \
+            --out json=load-results.json || true
+        continue-on-error: true
+
+      - name: Upload load results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-results
+          path: load-results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  chaos:
+    name: Chaos
+    if: ${{ github.event_name == 'schedule' && github.event.schedule == '0 10 * * 3' || github.event.inputs.run_chaos == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run chaos experiments
+        run: python tests/chaos/chaos_experiments.py
+        env:
+          SERVICE_URL: ${{ secrets.STAGING_URL || 'http://localhost:8080' }}
+        continue-on-error: true

@@ -1,0 +1,73 @@
+# syntax=docker/dockerfile:1
+FROM golang:1.22.0-alpine3.19 AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Create a simple main.go for testing
+COPY <<EOF /app/main.go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "time"
+)
+
+type HealthResponse struct {
+    Status    string    `json:"status"`
+    Timestamp time.Time `json:"timestamp"`
+    Service   string    `json:"service"`
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    response := HealthResponse{
+        Status:    "healthy",
+        Timestamp: time.Now(),
+        Service:   "scan-service",
+    }
+    json.NewEncoder(w).Encode(response)
+}
+
+func scanHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    response := map[string]interface{}{
+        "message": "Scan service is running",
+        "timestamp": time.Now(),
+        "method": r.Method,
+        "path": r.URL.Path,
+    }
+    json.NewEncoder(w).Encode(response)
+}
+
+func main() {
+    http.HandleFunc("/health", healthHandler)
+    http.HandleFunc("/ready", healthHandler)
+    http.HandleFunc("/v1/scan", scanHandler)
+    
+    fmt.Println("Scan service starting on port 8080...")
+    log.Fatal(http.ListenAndServe(":8080", nil))
+}
+EOF
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /scan-service main.go
+
+# Runtime stage
+FROM gcr.io/distroless/static-debian12:nonroot-amd64@sha256:26f9b99f2463f55f20db19feb4d96eb88b056e0f1be7016bb9296a464a89d772
+
+COPY --from=builder /scan-service /scan-service
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+USER nonroot:nonroot
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["/scan-service", "-healthcheck"]
+
+ENTRYPOINT ["/scan-service"]

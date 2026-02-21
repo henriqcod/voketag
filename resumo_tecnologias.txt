@@ -1,0 +1,31 @@
+Resumo das tecnologias:
+
+Admin (frontend + backend)
+Camada	Tecnologias
+Frontend	Next.js 14, React 18
+Backend	Python, FastAPI, SQLAlchemy, asyncpg (PostgreSQL), Redis, JWT, bcrypt, Alembic, Prometheus
+
+Factory (frontend + backend)
+Camada	Tecnologias
+Frontend	Next.js 14, React 18, TanStack React Query, React Hook Form, TailwindCSS, TypeScript
+Backend	Python, FastAPI, SQLAlchemy, asyncpg (PostgreSQL), Redis, Celery, JWT (python-jose), GCP Pub/Sub, OpenTelemetry, Alembic
+
+Scan (frontend + backend)
+Camada	Tecnologias
+Frontend	Next.js 14, React 18, Zustand, html5-qrcode, PWA (@ducanh2912/next-pwa), Web NFC
+Backend	Go 1.22, Gorilla Mux, Redis (go-redis), Prometheus, zerolog
+
+Landing Page
+Camada	Tecnologias
+Frontend	Next.js 14, React 18
+
+Outros backends
+Serviço	Tecnologias
+blockchain-service	Python, FastAPI, Celery, Web3.py, eth-account, SQLAlchemy, Redis
+
+Visão geral
+Projeto	Porta	Stack principal
+app (scan consumer)	3000	Next.js + Zustand + PWA
+factory	3001	Next.js + Tailwind + React Query
+landing	3002	Next.js
+admin	3003	Next.js

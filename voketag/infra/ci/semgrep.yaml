@@ -1,0 +1,31 @@
+# Semgrep SAST configuration
+# Enterprise security rules
+
+rules:
+  - id: hardcoded-secret
+    pattern: |
+      password = "..."
+    message: Hardcoded secret detected
+    severity: ERROR
+    languages: [python, go, javascript]
+
+  - id: sql-injection
+    pattern: |
+      db.execute(f"... {$VAR} ...")
+    message: Possible SQL injection
+    severity: ERROR
+    languages: [python]
+
+  - id: command-injection
+    pattern: |
+      os.system($VAR)
+    message: Possible command injection
+    severity: ERROR
+    languages: [python]
+
+  - id: jwt-none-algorithm
+    pattern: |
+      algorithm="none"
+    message: JWT none algorithm detected
+    severity: ERROR
+    languages: [python, javascript]
