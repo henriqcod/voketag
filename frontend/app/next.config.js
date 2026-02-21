@@ -20,7 +20,18 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig = {
   reactStrictMode: true,
-  
+
+  // LOW ENHANCEMENT: Optimize imports at package level
+  experimental: {
+    optimizePackageImports: [
+      "@mui/material",
+      "@ui/components",
+      "lodash",
+      "lodash-es",
+      "react-icons",
+    ],
+  },
+
   // Security headers
   async headers() {
     return [
@@ -90,7 +101,6 @@ const nextConfig = {
       };
     }
 
-    // LOW FIX: Enable bundle optimization
     // Production optimizations
     if (process.env.NODE_ENV === "production") {
       // Tree shaking for better bundle size
@@ -98,10 +108,30 @@ const nextConfig = {
         ...config.optimization,
         usedExports: true,
         sideEffects: false,
+        // LOW ENHANCEMENT: Code splitting strategy
+        splitChunks: {
+          chunks: "all",
+          cacheGroups: {
+            // Separate vendor code from app code
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendors",
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            // Common chunks used across pages
+            common: {
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
+          },
+        },
       };
     }
 
     // Bundle analyzer (enable with ANALYZE=true)
+    // Usage: ANALYZE=true npm run build
     if (process.env.ANALYZE === "true") {
       const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
       config.plugins.push(
@@ -111,6 +141,11 @@ const nextConfig = {
             ? "../analyze/server.html"
             : "./analyze/client.html",
           openAnalyzer: false,
+          // Generate stats.json for programmatic analysis
+          generateStatsFile: true,
+          statsFilename: isServer
+            ? "../analyze/server-stats.json"
+            : "./analyze/client-stats.json",
         })
       );
     }
