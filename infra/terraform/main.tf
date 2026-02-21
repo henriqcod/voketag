@@ -6,15 +6,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-
-  # LOW FIX: Enable state locking with Cloud Storage backend
-  # Prevents concurrent terraform applies
-  # To use: terraform init -backend-config="bucket=YOUR_BUCKET_NAME"
-  backend "gcs" {
-    prefix = "terraform/state"
-    # bucket must be specified via -backend-config or environment variable
-    # Enable versioning on the bucket for state history
-  }
+  # Backend configuration is in backend.tf
 }
 
 variable "project_id" {
