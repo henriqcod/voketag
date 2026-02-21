@@ -31,21 +31,30 @@ export default function SettingsPage() {
   const [confirmInvalidate, setConfirmInvalidate] = useState(false);
 
   const loadState = useCallback(async () => {
+    let isMounted = true;
     setLoading(true);
     try {
       const s = await getGodModeState();
-      setState(s);
-      setRiskLimitInput(String(s.risk_limit));
+      if (isMounted) {
+        setState(s);
+        setRiskLimitInput(String(s.risk_limit));
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro");
-      setState(null);
+      if (isMounted) {
+        setError(e instanceof Error ? e.message : "Erro");
+        setState(null);
+      }
     } finally {
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
-    loadState();
+    const cleanup = loadState();
+    return () => { 
+      cleanup.then(c => c && c()); 
+    };
   }, [loadState]);
 
   async function handleKillSwitch(active: boolean) {

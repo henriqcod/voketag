@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements.txt requirements-celery.txt ./
-RUN pip install --no-cache-dir --user -r requirements.txt -r requirements-celery.txt
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-celery.txt
 
 # Final stage
 FROM python:3.11-slim
@@ -25,13 +25,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependencies from builder
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY . .
 
 # Make sure scripts are in PATH
-ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app
 
 # Run as non-root user
@@ -48,4 +48,4 @@ EXPOSE 8080
 
 # Default command (API server)
 # For workers, override with: celery -A celery_app worker
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "uvicorn", "factory_service.main:app", "--host", "0.0.0.0", "--port", "8080"]

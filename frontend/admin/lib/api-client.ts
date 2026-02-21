@@ -273,6 +273,13 @@ export async function getLoginHistory(userId: string, limit = 50) {
   );
 }
 
+export async function createUser(data: { name: string; email: string; password: string; role: string }) {
+  return fetchWithAuth<{ id: string; email: string; name: string; role: string; is_active: boolean; created_at: string; updated_at: string }>(`/v1/admin/users`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 // Factory / Batches
 export interface Batch {
   id: string;

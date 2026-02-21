@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/Table";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { UserEditModal } from "@/components/users/UserEditModal";
+import { UserCreateModal } from "@/components/users/UserCreateModal";
 import { ResetPasswordModal } from "@/components/users/ResetPasswordModal";
 import { LoginHistoryDrawer } from "@/components/users/LoginHistoryDrawer";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -21,12 +22,13 @@ import {
   listUsers,
   deleteUser,
   updateUser,
+  createUser,
   blockUser,
   unblockUser,
   adminResetPassword,
   forceLogoutUser,
 } from "@/lib/api-client";
-import type { User } from "@/types/admin";
+import type { User, UserCreate } from "@/types/admin";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -41,6 +43,8 @@ export default function UsersPage() {
   const [forceLogoutLoading, setForceLogoutLoading] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const [resetUser, setResetUser] = useState<{ id: string; email: string } | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [loginHistoryUser, setLoginHistoryUser] = useState<{ id: string; email: string } | null>(null);
@@ -100,6 +104,19 @@ export default function UsersPage() {
     }
   }
 
+  async function handleCreateSave(data: UserCreate) {
+    setCreateLoading(true);
+    try {
+      await createUser(data);
+      setCreateModalOpen(false);
+      loadUsers();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao criar usuário");
+    } finally {
+      setCreateLoading(false);
+    }
+  }
+
   async function handleResetPassword(newPassword: string) {
     if (!resetUser) return;
     setResetLoading(true);
@@ -134,32 +151,36 @@ export default function UsersPage() {
       )}
 
       <Card className="mb-6">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="search"
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            className="rounded-lg border border-[#334155] bg-[#0f172a] px-3 py-2 text-sm text-[#f8fafc] placeholder-[#64748b] focus:border-blue-500 focus:outline-none"
-          />
-          <select
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value);
-              setPage(0);
-            }}
-            className="rounded-lg border border-[#334155] bg-[#0f172a] px-3 py-2 text-sm text-[#f8fafc] focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Todos os papéis</option>
-            <option value="super_admin">SuperAdmin</option>
-            <option value="admin">Admin</option>
-            <option value="compliance">Compliance</option>
-            <option value="factory_manager">FactoryManager</option>
-            <option value="viewer">Viewer</option>
-          </select>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <input
+              type="search"
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="rounded-lg border border-[#334155] bg-[#0f172a] px-3 py-2 text-sm text-[#f8fafc] placeholder-[#64748b] focus:border-blue-500 focus:outline-none"
+            />
+            <select
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(0);
+              }}
+              className="rounded-lg border border-[#334155] bg-[#0f172a] px-3 py-2 text-sm text-[#f8fafc] focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Todos os papéis</option>
+              <option value="super_admin">SuperAdmin</option>
+              <option value="admin">Admin</option>
+              <option value="compliance">Compliance</option>
+              <option value="factory_manager">FactoryManager</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+
+          <Button onClick={() => setCreateModalOpen(true)}>Novo Usuário</Button>
         </div>
       </Card>
 
@@ -317,6 +338,13 @@ export default function UsersPage() {
         onClose={() => setEditUser(null)}
         onSave={handleEditSave}
         loading={editLoading}
+      />
+
+      <UserCreateModal
+        open={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSave={handleCreateSave}
+        loading={createLoading}
       />
 
       <ResetPasswordModal

@@ -2,49 +2,63 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React, { useState } from "react";
+import { Button } from "@nextui-org/react";
+import { Home, Users2, Layers, ShieldCheck, Menu } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/users", label: "Usuários", icon: "👤" },
-  { href: "/factory", label: "Factory", icon: "🏭" },
-  { href: "/scans", label: "Scans", icon: "📱" },
-  { href: "/antifraud", label: "Antifraude", icon: "🛡️" },
-  { href: "/audit", label: "Auditoria", icon: "📋" },
-  { href: "/monitoring", label: "Monitoramento", icon: "📡" },
-  { href: "/settings", label: "Configurações", icon: "⚙️" },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/users", label: "Usuários", icon: Users2 },
+  { href: "/factory", label: "Factory", icon: Layers },
+  { href: "/scans", label: "Scans", icon: Home },
+  { href: "/antifraud", label: "Antifraude", icon: ShieldCheck },
+  { href: "/audit", label: "Auditoria", icon: Home },
+  { href: "/monitoring", label: "Monitoramento", icon: Home },
+  { href: "/settings", label: "Configurações", icon: Home },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-56 border-r border-[#334155] bg-[#1e293b]">
-      <div className="flex h-full flex-col">
-        <div className="border-b border-[#334155] px-4 py-5">
-          <Link href="/dashboard" className="text-xl font-bold text-[#f8fafc]">
-            VokeTag Admin
-          </Link>
-        </div>
-        <nav className="flex-1 space-y-0.5 p-3">
+    <aside
+      className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 bg-slate-900 text-slate-100 border-r border-slate-800 ${
+        collapsed ? "w-20" : "w-56"
+      }`}
+    >
+      <div className="flex h-16 items-center justify-between px-4">
+        <Link href="/dashboard" className={`text-lg font-semibold ${collapsed ? "hidden" : ""}`}>
+          VokeTag Admin
+        </Link>
+        <Button auto light onClick={() => setCollapsed((s) => !s)} aria-label="toggle menu">
+          <Menu className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="h-px bg-slate-800" />
+
+      <nav className="flex-1 overflow-y-auto p-2 pt-3">
+        <ul className="space-y-1">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href;
+            const active = pathname === item.href || pathname?.startsWith(item.href + "/");
+            const IconComp = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-brand-500/20 text-[#f8fafc]"
-                    : "text-[#94a3b8] hover:bg-[#334155]/50 hover:text-[#f8fafc]"
-                }`}
-              >
-                <span className="text-base">{item.icon}</span>
-                {item.label}
-              </Link>
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-slate-800 transition-colors ${
+                    active ? "bg-slate-800 font-medium" : "text-slate-300"
+                  }`}
+                >
+                  <IconComp className="w-4 h-4" />
+                  <span className={`${collapsed ? "hidden" : ""}`}>{item.label}</span>
+                </Link>
+              </li>
             );
           })}
-        </nav>
-      </div>
+        </ul>
+      </nav>
     </aside>
   );
 }

@@ -9,6 +9,13 @@ export interface User {
   updated_at: string;
 }
 
+export interface UserCreate {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 export interface DashboardStats {
   total_users?: number;
   total_products?: number;
