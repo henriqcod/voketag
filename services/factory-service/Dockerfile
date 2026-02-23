@@ -46,6 +46,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 # Expose ports
 EXPOSE 8080
 
-# Default command (API server)
+# Default command (API server): run migrations then start
 # For workers, override with: celery -A celery_app worker
-CMD ["python", "-m", "uvicorn", "factory_service.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn factory_service.main:app --host 0.0.0.0 --port 8080"]

@@ -11,7 +11,7 @@ Ambiente local **CONFIGURADO E FUNCIONANDO** com sucesso!
 | **Scan Service** | Go | 8080 | ✅ Funcionando | http://localhost:8080 |
 | **Factory Service** | Python/FastAPI | 8081 | ✅ Funcionando | http://localhost:8081 |
 | **Admin Service** | Python/FastAPI | 8082 | ✅ Funcionando | http://localhost:8082 |
-| **Blockchain Service** | Python/FastAPI | 8083 | ✅ Funcionando | http://localhost:8083 |
+| **Blockchain Service** | Python/FastAPI | 8003 | ✅ Funcionando | http://localhost:8003 |
 | **PostgreSQL** | Database | 5432 | ✅ Funcionando | localhost:5432 |
 | **Redis** | Cache | 6379 | ✅ Funcionando | localhost:6379 |
 
@@ -79,7 +79,9 @@ POST http://localhost:8080/v1/report
 
 #### **Factory Service (Python/FastAPI)**
 ```bash
-# Requer JWT (login em /v1/docs ou frontend factory)
+# Login (proxy para Admin)
+POST http://localhost:8081/v1/auth/login  # body: { email, password }
+# Requer JWT (obtido via login acima)
 GET  http://localhost:8081/v1/products
 POST http://localhost:8081/v1/products
 GET  http://localhost:8081/v1/batches

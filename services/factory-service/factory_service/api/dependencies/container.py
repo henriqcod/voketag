@@ -22,8 +22,7 @@ async def get_product_service():
 
 async def get_batch_service():
     async with get_db_session() as session:
-        repo = BatchRepository(session)
-        yield BatchService(repo)
+        yield BatchService(session)
 
 
 async def get_api_key_service():

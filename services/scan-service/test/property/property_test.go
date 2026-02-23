@@ -1,6 +1,8 @@
 package property
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -8,8 +10,8 @@ import (
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
-	"github.com/stretchr/testify/assert"
 
+	"github.com/voketag/scan-service/internal/circuitbreaker"
 	"github.com/voketag/scan-service/internal/model"
 )
 

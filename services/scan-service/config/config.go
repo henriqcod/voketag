@@ -50,6 +50,8 @@ type AntifraudConfig struct {
 	Enabled         bool
 	MaxScansPerHour int
 	BlockThreshold  int
+	TokenSecret     string
+	TokenTTLSeconds int
 }
 
 type PubSubConfig struct {
@@ -90,6 +92,7 @@ func Load(ctx context.Context) (*Config, error) {
 
 	antifraudMax, _ := strconv.Atoi(getEnv("ANTIFRAUD_MAX_SCANS_PER_HOUR", "1000"))
 	antifraudBlock, _ := strconv.Atoi(getEnv("ANTIFRAUD_BLOCK_THRESHOLD", "100"))
+	antifraudTokenTTL, _ := strconv.Atoi(getEnv("ANTIFRAUD_TOKEN_TTL_SECONDS", "86400")) // 24h default
 
 	rateLimitIP, _ := strconv.Atoi(getEnv("RATE_LIMIT_IP_PER_MINUTE", "100"))
 	rateLimitKey, _ := strconv.Atoi(getEnv("RATE_LIMIT_KEY_PER_MINUTE", "1000"))
@@ -125,6 +128,8 @@ func Load(ctx context.Context) (*Config, error) {
 			Enabled:         getEnv("ANTIFRAUD_ENABLED", "true") == "true",
 			MaxScansPerHour: antifraudMax,
 			BlockThreshold:  antifraudBlock,
+			TokenSecret:     getEnv("ANTIFRAUD_TOKEN_SECRET", "change-me-in-production"),
+			TokenTTLSeconds: antifraudTokenTTL,
 		},
 		PubSub: PubSubConfig{
 			ProjectID: getEnv("GCP_PROJECT_ID", ""),

@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     # Redis (shared)
     redis_url: str = "redis://localhost:6379/0"
     
-    # Auth (shared with Factory Service)
-    jwt_secret: str = "change-me-in-production"
+    # Auth - JWT_SECRET deve ser idêntico ao usado pelo Factory (admin_jwt_secret)
+    jwt_secret: str = Field(default="change-me-in-production", validation_alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
     jwt_refresh_expiration_days: int = 7

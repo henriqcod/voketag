@@ -26,7 +26,7 @@ def upgrade():
         sa.Column('merkle_root', sa.String(64), nullable=True),
         sa.Column('blockchain_tx', sa.String(255), nullable=True),
         sa.Column('blockchain_task_id', sa.String(255), nullable=True),
-        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('batch_metadata', sa.JSON(), nullable=True),
         sa.Column('error', sa.String(1000), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),

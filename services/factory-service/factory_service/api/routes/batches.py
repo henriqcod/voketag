@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, BackgroundTasks, Request
 from pydantic import BaseModel, Field
 from uuid import UUID
 from typing import Optional
 
 from factory_service.api.dependencies import get_batch_service
+from factory_service.api.dependencies.container import get_db
 from factory_service.core.auth.jwt import jwt_auth_required
 from factory_service.domain.batch.service import BatchService
 from factory_service.domain.batch.models import BatchCreate, BatchResponse
+from factory_service.domain.product.repository import ProductRepository
 from factory_service.workers.batch_processor import process_batch
 
 router = APIRouter()
@@ -58,16 +60,17 @@ async def create_batch(
     
     # Create batch record
     batch_id = uuid4()
+    metadata = {
+        "product_name": data.product_name,
+        "category": data.category,
+        **(data.metadata or {})
+    }
     batch_data = {
         "id": batch_id,
-        "factory_id": UUID(_user["sub"]),  # From JWT token
+        "factory_id": UUID(_user["sub"]),  # From JWT token (admin user id)
         "product_count": data.product_count,
         "status": "pending",
-        "metadata": {
-            "product_name": data.product_name,
-            "category": data.category,
-            **(data.batch_metadata or {})
-        },
+        "batch_metadata": metadata,
         "created_at": datetime.utcnow(),
     }
     
@@ -77,7 +80,7 @@ async def create_batch(
     task = process_batch.delay(
         batch_id=str(batch_id),
         product_count=data.product_count,
-        metadata=batch_data["metadata"]
+        metadata=metadata
     )
     
     # Estimate completion time based on product count
@@ -243,20 +246,73 @@ async def upload_csv(
     return result
 
 
+@router.get("/{batch_id}/products")
+async def get_batch_products(
+    batch_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    svc: BatchService = Depends(get_batch_service),
+    db=Depends(get_db),
+    _user=Depends(jwt_auth_required),
+):
+    """
+    List products in a batch.
+    Returns serial_number, verification_url, and product metadata.
+    """
+    batch = await svc.get_by_id(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    repo = ProductRepository(db)
+    products = await repo.list_products(batch_id=batch_id, skip=skip, limit=limit)
+
+    return [
+        {
+            "serial_number": p.serial_number or str(p.id),
+            "product_code": p.token[:16] if p.token else None,
+            "batch_id": str(p.batch_id),
+            "verification_url": p.verification_url,
+            "qr_code_url": p.verification_url,
+        }
+        for p in products
+    ]
+
+
+@router.get("/{batch_id}/antifraud-events")
+async def get_batch_antifraud_events(
+    batch_id: UUID,
+    svc: BatchService = Depends(get_batch_service),
+    _user=Depends(jwt_auth_required),
+):
+    """
+    List antifraud events for a batch.
+    Antifraud events are tracked by scan-service; returns empty for now.
+    """
+    batch = await svc.get_by_id(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    return []
+
+
 @router.get("", response_model=list[BatchResponse])
 async def list_batches(
-    product_id: UUID | None = None,
-    skip: int = Query(0, ge=0, description="Number of items to skip (min: 0)"),  # HIGH FIX: Validate skip >= 0
-    limit: int = Query(50, ge=1, le=100, description="Max items to return (1-100)"),  # HIGH FIX: Enforce max limit
+    request: Request,
+    product_id: UUID | None = Query(None, description="Filter by product ID"),
+    skip: int = Query(0, ge=0, description="Number of items to skip (min: 0)"),
+    limit: int = Query(50, ge=1, le=100, description="Max items to return (1-100)"),
+    status: Optional[str] = Query(None, description="Filter by status"),
     svc: BatchService = Depends(get_batch_service),
-    _user=Depends(jwt_auth_required),  # HIGH SECURITY FIX: Require authentication
+    _user=Depends(jwt_auth_required),
 ):
     """
     List batches with pagination.
-    
-    HIGH SECURITY:
-    - Requires valid JWT authentication
-    - Enforces maximum limit of 100 (DoS prevention)
-    - Validates skip >= 0 (prevents negative offset attacks)
+    Filters by factory_id from JWT (admin user id) when using admin-issued tokens.
     """
-    return await svc.list(product_id=product_id, skip=skip, limit=limit)
+    factory_id = None
+    payload = getattr(request.state, "jwt_payload", None)
+    if payload and payload.get("sub"):
+        try:
+            factory_id = UUID(payload["sub"])
+        except (ValueError, TypeError):
+            pass
+    return await svc.list(factory_id=factory_id, status=status, skip=skip, limit=limit)

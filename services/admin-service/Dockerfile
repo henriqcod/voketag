@@ -26,5 +26,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 # Expose port
 EXPOSE 8080
 
-# Run application
-CMD ["python", "-m", "uvicorn", "admin_service.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run migrations, create initial admin if env set, then application
+CMD ["sh", "-c", "alembic upgrade head && (if [ -n \"$INIT_ADMIN_EMAIL\" ]; then python -m admin_service.scripts.create_admin \"$INIT_ADMIN_EMAIL\" \"$INIT_ADMIN_PASSWORD\" \"${INIT_ADMIN_NAME:-Admin}\" --super-admin 2>/dev/null || true; fi) && python -m uvicorn admin_service.main:app --host 0.0.0.0 --port 8080"]

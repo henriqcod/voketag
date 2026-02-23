@@ -87,9 +87,14 @@ class BatchService:
                 "factory_id": str(b.factory_id),
                 "product_count": b.product_count,
                 "status": b.status,
+                "merkle_root": b.merkle_root,
                 "blockchain_tx": b.blockchain_tx,
-                "created_at": b.created_at.isoformat(),
-                "anchored_at": b.anchored_at.isoformat() if b.anchored_at else None,
+                "batch_metadata": b.batch_metadata,
+                "error": b.error,
+                "created_at": b.created_at,
+                "updated_at": b.updated_at,
+                "processing_completed_at": b.processing_completed_at,
+                "anchored_at": b.anchored_at,
             }
             for b in batches
         ]

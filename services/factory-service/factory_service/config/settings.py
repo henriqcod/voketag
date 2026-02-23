@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -14,6 +15,12 @@ class Settings(BaseSettings):
     jwt_issuer: str = ""
     jwt_audience: str = ""
     admin_internal_api_key: str = ""  # Admin service internal calls (X-Admin-Internal-Key)
+    admin_api_url: str = "http://127.0.0.1:8082"  # Admin service URL for login proxy
+    admin_jwt_secret: str = ""  # When set, factory validates admin-issued HS256 tokens (dev/shared auth)
+
+    def get_admin_jwt_secret(self) -> str:
+        """ADMIN_JWT_SECRET or JWT_SECRET (Docker passes JWT_SECRET)."""
+        return self.admin_jwt_secret or os.getenv("JWT_SECRET", "")
     shutdown_timeout: int = 10
     context_timeout: int = 5
     otel_enabled: bool = True
@@ -47,7 +54,7 @@ class Settings(BaseSettings):
     # CORS Configuration - CRITICAL SECURITY SETTING
     # In production: Set to specific domains only, never use "*"
     # Example: CORS_ORIGINS="https://app.voketag.com.br,https://fabr.voketag.com.br"
-    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+    cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3003,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3003"
     
     @property
     def cors_origins_list(self) -> list[str]:
@@ -59,7 +66,10 @@ class Settings(BaseSettings):
                     "CRITICAL: CORS_ORIGINS must be set to specific domains in production. "
                     "Never use '*' with allow_credentials=True"
                 )
-            return ["http://localhost:3000", "http://localhost:3001"]
+            return [
+                "http://localhost:3000", "http://localhost:3001", "http://localhost:3003",
+                "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:3003",
+            ]
         return [origin.strip() for origin in self.cors_origins.split(",")]
 
     class Config:

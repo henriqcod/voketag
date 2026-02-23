@@ -47,6 +47,8 @@
 | GET | `/v1/scan`, GET `/v1/scan/{tag_id}` | Verificação (scan) |
 | POST | `/v1/scan` | Verificação com antifraude (body: tag_id, fingerprint, etc.) |
 | POST | `/v1/report` | Reportar fraude |
+| POST | `/api/verify/{token}` | Verificação por token (antifraud) |
+| POST | `/api/fraud/report` | Reportar fraude (pós-verificação) |
 
 **Exemplo:**
 ```bash

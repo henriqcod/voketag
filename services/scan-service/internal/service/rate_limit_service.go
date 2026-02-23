@@ -69,15 +69,15 @@ func NewRateLimitService(rdb *redis.Client, logger zerolog.Logger, cfg RateLimit
 		region = "default"
 		logger.Warn().Msg("CLOUD_RUN_REGION not set - using 'default' region for rate limiting")
 	}
-	
+
 	// Initialize region state with cold start protection
 	regionState := RegionState{
 		Region:         region,
 		StartedAt:      time.Now(),
 		ColdPeriod:     5 * time.Minute, // 5 minute cold start period
-		ColdStartLimit: 0.5,              // 50% of normal limit during cold start
+		ColdStartLimit: 0.5,             // 50% of normal limit during cold start
 	}
-	
+
 	svc := &RateLimitService{
 		rdb:               rdb,
 		logger:            logger,
@@ -89,11 +89,11 @@ func NewRateLimitService(rdb *redis.Client, logger zerolog.Logger, cfg RateLimit
 		circuitBreaker:    NewRateLimitCircuitBreaker(logger),
 		enableGlobalCheck: cfg.EnableGlobalCheck,
 	}
-	
+
 	// Preload Lua script
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	sha, err := rdb.ScriptLoad(ctx, rateLimitLuaScript).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to preload rate limit Lua script")
@@ -107,7 +107,7 @@ func NewRateLimitService(rdb *redis.Client, logger zerolog.Logger, cfg RateLimit
 			Dur("cold_period", regionState.ColdPeriod).
 			Msg("rate limit Lua script preloaded - regional rate limiting enabled with cold start protection")
 	}
-	
+
 	return svc
 }
 
@@ -118,19 +118,19 @@ func (s *RateLimitService) CheckIPRateLimit(ctx context.Context, ip, requestID s
 	// Regional rate limit key: ratelimit:{region}:ip:{ip}
 	// This ensures rate limits are independent per region
 	key := fmt.Sprintf("ratelimit:%s:ip:%s", s.region, ip)
-	
+
 	// Apply cold start protection (reduced limit during first 5 minutes)
 	limit := s.getEffectiveLimit(s.ipLimitPerMinute)
-	
+
 	var allowed bool
 	var err error
-	
+
 	// Execute with circuit breaker protection
 	cbErr := s.circuitBreaker.Call(func() error {
 		allowed, err = s.checkRateLimit(ctx, key, limit, requestID)
 		return err
 	})
-	
+
 	if cbErr != nil {
 		// Circuit breaker is open - fail according to policy
 		if s.failClosed {
@@ -139,7 +139,7 @@ func (s *RateLimitService) CheckIPRateLimit(ctx context.Context, ip, requestID s
 		s.logger.Warn().Str("request_id", requestID).Msg("circuit breaker open - failing open")
 		return true, nil
 	}
-	
+
 	// Optional: Global rate limit check (cross-region)
 	if allowed && s.enableGlobalCheck {
 		globalAllowed, globalErr := s.checkGlobalRateLimit(ctx, ip, requestID)
@@ -154,27 +154,27 @@ func (s *RateLimitService) CheckIPRateLimit(ctx context.Context, ip, requestID s
 			return false, nil
 		}
 	}
-	
+
 	return allowed, err
 }
 
 // getEffectiveLimit returns the effective rate limit considering cold start protection
 func (s *RateLimitService) getEffectiveLimit(baseLimit int) int {
 	regionAge := time.Since(s.regionState.StartedAt)
-	
+
 	// Cold start period: apply reduced limit
 	if regionAge < s.regionState.ColdPeriod {
 		effectiveLimit := int(float64(baseLimit) * s.regionState.ColdStartLimit)
-		
+
 		s.logger.Debug().
 			Int("base_limit", baseLimit).
 			Int("effective_limit", effectiveLimit).
 			Dur("region_age", regionAge).
 			Msg("cold start protection: reduced limit applied")
-		
+
 		return effectiveLimit
 	}
-	
+
 	return baseLimit
 }
 
@@ -183,15 +183,15 @@ func (s *RateLimitService) getEffectiveLimit(baseLimit int) int {
 func (s *RateLimitService) checkGlobalRateLimit(ctx context.Context, ip, requestID string) (bool, error) {
 	// Global key (no region prefix)
 	globalKey := fmt.Sprintf("ratelimit:global:ip:%s", ip)
-	
+
 	// Global limit is 2x regional limit (allows some geographic distribution)
 	globalLimit := s.ipLimitPerMinute * 2
-	
+
 	allowed, err := s.checkRateLimit(ctx, globalKey, globalLimit, requestID)
 	if err != nil {
 		return false, err
 	}
-	
+
 	if !allowed {
 		s.logger.Warn().
 			Str("request_id", requestID).
@@ -199,7 +199,7 @@ func (s *RateLimitService) checkGlobalRateLimit(ctx context.Context, ip, request
 			Int("global_limit", globalLimit).
 			Msg("global rate limit exceeded - potential distributed attack")
 	}
-	
+
 	return allowed, nil
 }
 
@@ -209,19 +209,19 @@ func (s *RateLimitService) checkGlobalRateLimit(ctx context.Context, ip, request
 func (s *RateLimitService) CheckAPIKeyRateLimit(ctx context.Context, apiKey, requestID string) (bool, error) {
 	// Regional rate limit key: ratelimit:{region}:key:{key}
 	key := fmt.Sprintf("ratelimit:%s:key:%s", s.region, apiKey)
-	
+
 	// Apply cold start protection
 	limit := s.getEffectiveLimit(s.keyLimitPerMinute)
-	
+
 	var allowed bool
 	var err error
-	
+
 	// Execute with circuit breaker protection
 	cbErr := s.circuitBreaker.Call(func() error {
 		allowed, err = s.checkRateLimit(ctx, key, limit, requestID)
 		return err
 	})
-	
+
 	if cbErr != nil {
 		// Circuit breaker is open - fail according to policy
 		if s.failClosed {
@@ -230,7 +230,7 @@ func (s *RateLimitService) CheckAPIKeyRateLimit(ctx context.Context, apiKey, req
 		s.logger.Warn().Str("request_id", requestID).Msg("circuit breaker open - failing open")
 		return true, nil
 	}
-	
+
 	return allowed, err
 }
 
@@ -242,7 +242,7 @@ func (s *RateLimitService) checkRateLimit(ctx context.Context, key string, limit
 
 	now := time.Now().UnixMilli()
 	windowStart := now - (60 * 1000) // 1 minute window
-	ttl := 120                        // 2 minutes TTL for cleanup
+	ttl := 120                       // 2 minutes TTL for cleanup
 
 	// Prepare script arguments
 	keys := []string{key}

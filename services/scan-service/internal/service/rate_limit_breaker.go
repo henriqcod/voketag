@@ -33,10 +33,10 @@ type RateLimitCircuitBreaker struct {
 	lastStateChange          time.Time
 	failureThreshold         int
 	halfOpenTimeout          time.Duration
-	halfOpenAttempts         int   // Current number of attempts in half-open state
-	halfOpenMaxAttempts      int   // Maximum allowed attempts in half-open (default: 1)
-	halfOpenSuccessThreshold int   // Required consecutive successes to close (anti-flapping)
-	halfOpenSuccessCount     int   // Current consecutive successes in half-open
+	halfOpenAttempts         int // Current number of attempts in half-open state
+	halfOpenMaxAttempts      int // Maximum allowed attempts in half-open (default: 1)
+	halfOpenSuccessThreshold int // Required consecutive successes to close (anti-flapping)
+	halfOpenSuccessCount     int // Current consecutive successes in half-open
 	logger                   zerolog.Logger
 	totalErrors              int64
 	totalRequests            int64
@@ -49,14 +49,14 @@ func NewRateLimitCircuitBreaker(logger zerolog.Logger) *RateLimitCircuitBreaker 
 	// Add jitter to halfOpenTimeout (±20%) to prevent synchronized retries
 	baseTimeout := 10 * time.Second
 	jitter := time.Duration(rand.Float64()*0.4*float64(baseTimeout)) - (baseTimeout / 5)
-	
+
 	return &RateLimitCircuitBreaker{
-		state:                   RateLimitBreakerClosed,
-		failureThreshold:        5,  // Open after 5 consecutive failures
-		halfOpenTimeout:         baseTimeout + jitter, // 8s to 12s with jitter
-		halfOpenMaxAttempts:     1,  // Only 1 test request in half-open (prevent thundering herd)
-		halfOpenSuccessThreshold: 3,  // Require 3 consecutive successes to close (anti-flapping)
-		logger:                  logger,
+		state:                    RateLimitBreakerClosed,
+		failureThreshold:         5,                    // Open after 5 consecutive failures
+		halfOpenTimeout:          baseTimeout + jitter, // 8s to 12s with jitter
+		halfOpenMaxAttempts:      1,                    // Only 1 test request in half-open (prevent thundering herd)
+		halfOpenSuccessThreshold: 3,                    // Require 3 consecutive successes to close (anti-flapping)
+		logger:                   logger,
 	}
 }
 
@@ -113,7 +113,7 @@ func (cb *RateLimitCircuitBreaker) recordFailure() {
 	cb.totalErrors++
 	cb.failures++
 	cb.lastFailureTime = time.Now()
-	
+
 	// Reset half-open success count on failure
 	if cb.state == RateLimitBreakerHalfOpen {
 		cb.halfOpenSuccessCount = 0
@@ -136,12 +136,12 @@ func (cb *RateLimitCircuitBreaker) recordSuccess() {
 
 	if cb.state == RateLimitBreakerHalfOpen {
 		cb.halfOpenSuccessCount++
-		
+
 		cb.logger.Debug().
 			Int("success_count", cb.halfOpenSuccessCount).
 			Int("required", cb.halfOpenSuccessThreshold).
 			Msg("half-open success recorded")
-		
+
 		// Anti-flapping: Require N consecutive successes
 		if cb.halfOpenSuccessCount >= cb.halfOpenSuccessThreshold {
 			cb.setState(RateLimitBreakerClosed)

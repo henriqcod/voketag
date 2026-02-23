@@ -92,10 +92,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-xs text-graphite-500">
-        Em desenvolvimento: o backend pode não ter endpoint de login. Use token
-        manual em localStorage se necessário.
-      </p>
     </div>
   );
 }

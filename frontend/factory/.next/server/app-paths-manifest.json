@@ -1,3 +1,7 @@
 {
-  "/(auth)/login/page": "app/(auth)/login/page.js"
+  "/not-found": "app/not-found.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(dashboard)/batches/novo/page": "app/(dashboard)/batches/novo/page.js",
+  "/(dashboard)/batches/page": "app/(dashboard)/batches/page.js"
 }

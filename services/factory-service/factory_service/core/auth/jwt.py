@@ -1,3 +1,4 @@
+import os
 import time
 import asyncio
 import httpx
@@ -83,20 +84,6 @@ def jwt_auth_required():
             request.state.user_id = "admin-internal"
             return request.state.jwt_payload
 
-        # HIGH SECURITY FIX: In production, fail closed (reject request)
-        if (
-            not settings.jwt_jwks_uri
-            or not settings.jwt_issuer
-            or not settings.jwt_audience
-        ):
-            if settings.env == "production":
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="JWT authentication not configured"
-                )
-            # Development: allow bypass (but log warning)
-            return None
-
         auth = request.headers.get("Authorization")
         if not auth or not auth.startswith("Bearer "):
             raise HTTPException(
@@ -105,6 +92,38 @@ def jwt_auth_required():
             )
 
         token = auth[7:]
+
+        # Admin-issued HS256 token (ADMIN_JWT_SECRET or JWT_SECRET for dev/shared auth)
+        admin_secret = settings.get_admin_jwt_secret()
+        if admin_secret:
+            try:
+                payload = jwt.decode(
+                    token,
+                    admin_secret,
+                    algorithms=["HS256"],
+                )
+                request.state.jwt_payload = payload
+                request.state.user_id = payload.get("sub") or payload.get("user_id")
+                return payload
+            except JWTError:
+                pass  # Fall through to JWKS if configured
+
+        # JWKS validation (production)
+        if (
+            not settings.jwt_jwks_uri
+            or not settings.jwt_issuer
+            or not settings.jwt_audience
+        ):
+            if settings.env == "production":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired token",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="JWT not configured. Set admin_jwt_secret for dev or jwt_jwks_uri for production.",
+            )
+
         try:
             jwks = await _get_jwks(settings.jwt_jwks_uri)  # HIGH FIX: await async call
             unverified = jwt.get_unverified_header(token)

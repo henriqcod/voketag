@@ -34,6 +34,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
+# Use separate version table so Factory and Admin can share same DB without conflict
+VERSION_TABLE = "factory_alembic_version"
+
+
 def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
@@ -50,6 +54,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        version_table=VERSION_TABLE,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
@@ -65,9 +70,9 @@ def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
+        version_table=VERSION_TABLE,
         compare_type=True,
         compare_server_default=True,
-        # Transaction per migration (safer)
         transaction_per_migration=True,
     )
 

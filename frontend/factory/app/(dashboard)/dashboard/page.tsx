@@ -14,7 +14,7 @@ type GeoPeriod = "1d" | "7d" | "30d";
 export default function DashboardPage() {
   const [geoPeriod, setGeoPeriod] = useState<GeoPeriod>("1d");
 
-  const { data, isLoading, error } = useDashboardMetrics();
+  const { data, isLoading, error, refetch, isRefetching } = useDashboardMetrics();
 
   const { setHeader } = useLayout();
   useEffect(() => {
@@ -63,7 +63,19 @@ export default function DashboardPage() {
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Alertas ativos</p>
           {metrics.active_alerts.map((a) => (
-            <p key={a.id} className="mt-1 text-sm text-amber-700 dark:text-amber-300">{a.message}</p>
+            <div key={a.id} className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="text-sm text-amber-700 dark:text-amber-300">{a.message}</p>
+              {a.id === "offline" && (
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  disabled={isRefetching}
+                  className="rounded bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {isRefetching ? "Tentando..." : "Tentar novamente"}
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

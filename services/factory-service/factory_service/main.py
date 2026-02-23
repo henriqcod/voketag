@@ -11,6 +11,11 @@ from redis import Redis
 from factory_service.config.settings import get_settings
 from factory_service.api.routes import v1_router
 from factory_service.api.routes.internal import router as internal_router
+from factory_service.api.routes.auth import router as auth_router
+from factory_service.api.routes.settings_routes import router as settings_router
+from factory_service.api.routes.audit_routes import router as audit_router
+from factory_service.api.routes.scans_routes import router as scans_router
+from factory_service.events.audit_logger import init_audit_logger
 from factory_service.api.middleware.request_id import RequestIDMiddleware
 from factory_service.api.middleware.rate_limit_redis import RedisRateLimitMiddleware
 from factory_service.api.middleware.structured_logging import StructuredLoggingMiddleware
@@ -26,6 +31,13 @@ shutdown_event = asyncio.Event()
 async def lifespan(app: FastAPI):
     """Lifespan com graceful shutdown (10s)."""
     logger.info("factory-service starting")
+    try:
+        from factory_service.events.audit_logger import get_audit_logger
+        audit = get_audit_logger()
+        if hasattr(audit, "start"):
+            await audit.start()
+    except Exception as e:
+        logger.warning("Audit logger start skipped: %s", e)
     yield
     logger.info("factory-service shutting down")
     await asyncio.wait_for(shutdown_event.wait(), timeout=10.0)
@@ -34,14 +46,15 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     init_tracing("factory-service")
-    
-    # Initialize Redis client for rate limiting
+
+    # Initialize Redis client for rate limiting, settings, and audit logs
     redis_client = Redis.from_url(
         settings.redis_url,
         decode_responses=False,  # We need bytes for Lua script
         socket_timeout=settings.redis_timeout_ms / 1000.0,
         socket_connect_timeout=settings.redis_timeout_ms / 1000.0,
     )
+    init_audit_logger(redis_client, enable_signature=False)
 
     app = FastAPI(
         title="VokeTag Factory Service",
@@ -61,7 +74,8 @@ def create_app() -> FastAPI:
         window_seconds=60,
         fail_open=True  # Allow requests if Redis fails (resilience)
     )
-    
+
+    app.state.redis = redis_client
     app.add_middleware(RequestIDMiddleware)
     
     # CORS Configuration - CRITICAL SECURITY SETTING
@@ -77,7 +91,11 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-CSRF-Token"],  # Explicit headers
     )
 
+    app.include_router(auth_router, prefix="/v1", tags=["auth"])
     app.include_router(v1_router, prefix="/v1", tags=["v1"])
+    app.include_router(settings_router, prefix="/v1/settings", tags=["settings"])
+    app.include_router(audit_router, prefix="/v1/audit", tags=["audit"])
+    app.include_router(scans_router, prefix="/v1/scans", tags=["scans"])
     app.include_router(internal_router, prefix="/internal", tags=["internal"])
 
     @app.get("/v1/health")

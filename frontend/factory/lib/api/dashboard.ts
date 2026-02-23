@@ -99,7 +99,18 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
       blockchain_status: "online" as const,
     };
   } catch (err) {
-    if (!isNetworkOr5xx(err)) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (typeof window !== "undefined") {
+      if (msg.includes("401")) {
+        const { clearAuthCookies } = await import("@/lib/auth-cookies");
+        clearAuthCookies();
+        const redirect = encodeURIComponent(window.location.pathname || "/dashboard");
+        window.location.href = `/login?redirect=${redirect}`;
+        throw err;
+      }
+      console.warn("[Dashboard] API indisponível:", msg);
+    }
+    // API indisponível (conexão, 404, 5xx) — usa dados de fallback
     const now = new Date();
     const scansByHour = Array.from({ length: 24 }, (_, i) => {
       const h = (now.getHours() - 23 + i + 24) % 24;
@@ -116,7 +127,7 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
       scans_30d: scans24 * 25 + Math.floor(Math.random() * 2000),
       risk_rate: 5,
       blockchain_sla: 99.5,
-      system_status: "online" as const,
+      system_status: "degraded" as const,
       scans_by_hour: scansByHour,
       scans_by_minute: Array.from({ length: 60 }, (_, i) => ({ minute: `${i}`, count: Math.floor(Math.random() * 25) + 8 })),
       geo_distribution: [
@@ -126,14 +137,16 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
         { country: "MX", count: Math.floor(Math.random() * 180) + 40 },
       ],
       last_anchorages: [],
-      active_alerts: [],
-      blockchain_status: "online" as const,
+      active_alerts: [
+        {
+          id: "offline",
+          message:
+            "API indisponível. Exibindo dados de exemplo. Possíveis causas: Docker parado, token expirado ou sem login.",
+          severity: "info" as const,
+        },
+      ],
+      blockchain_status: "offline" as const,
     };
   }
 }
 
-function isNetworkOr5xx(err: unknown): boolean {
-  if (err instanceof Error && err.message.startsWith("HTTP 5")) return true;
-  if (err instanceof TypeError && err.message.includes("fetch")) return true;
-  return false;
-}

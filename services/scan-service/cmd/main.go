@@ -110,8 +110,12 @@ func main() {
 	antifraudEngine := antifraud.NewEngine(
 		rdb,
 		log,
-		cfg.Antifraud.MaxScansPerHour,
-		cfg.Antifraud.BlockThreshold,
+		antifraud.EngineConfig{
+			MaxHourly:   cfg.Antifraud.MaxScansPerHour,
+			BlockThresh: cfg.Antifraud.BlockThreshold,
+			TokenSecret: cfg.Antifraud.TokenSecret,
+			TokenTTL:    time.Duration(cfg.Antifraud.TokenTTLSeconds) * time.Second,
+		},
 	)
 
 	var publisher service.EventPublisher
@@ -140,6 +144,7 @@ func main() {
 	)
 
 	scanHandler := handler.NewScanHandler(scanSvc)
+	verifyHandler := handler.NewVerifyHandler(antifraudEngine, log)
 
 	mux := http.NewServeMux()
 	scanWithValidation := middleware.ValidateUUID("tag_id")(http.HandlerFunc(scanHandler.Handle))
@@ -150,6 +155,8 @@ func main() {
 	mux.Handle("GET /v1/scan", scanWithValidation)
 	mux.Handle("POST /v1/scan", http.HandlerFunc(scanHandler.Handle))
 	mux.Handle("POST /v1/report", http.HandlerFunc(scanHandler.HandleReport))
+	mux.Handle("POST /api/verify/{token}", http.HandlerFunc(verifyHandler.Handle))
+	mux.Handle("POST /api/fraud/report", http.HandlerFunc(verifyHandler.HandleReportFraud))
 
 	handlerChain := middleware.Logging(log)(
 		middleware.TraceContext()(  // MEDIUM FIX: Extract trace context from headers

@@ -16,6 +16,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-voketag}
       POSTGRES_USER: ${POSTGRES_USER:-voketag}
@@ -71,6 +73,9 @@ services:
       HMAC_SECRET: ${HMAC_SECRET:-change-me-in-production-very-secret-key}
       BLOCKCHAIN_SERVICE_URL: http://blockchain-service:8003
       ADMIN_INTERNAL_API_KEY: ${ADMIN_INTERNAL_API_KEY:-}
+      ADMIN_API_URL: http://admin-service:8080
+      ADMIN_JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       ANCHOR_CALLBACK_BASE_URL: http://factory-service:8080
       ANCHOR_CALLBACK_INTERNAL_KEY: ${ANCHOR_CALLBACK_KEY:-voketag-callback-secret}
     depends_on:
@@ -194,8 +199,11 @@ services:
       PORT: 8080
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-voketag}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:-voketag}
       REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       ADMIN_INTERNAL_API_KEY: ${ADMIN_INTERNAL_API_KEY:-}
+      INIT_ADMIN_EMAIL: ${INIT_ADMIN_EMAIL:-admin@voketag.com.br}
+      INIT_ADMIN_PASSWORD: ${INIT_ADMIN_PASSWORD:-admin123}
+      INIT_ADMIN_NAME: ${INIT_ADMIN_NAME:-Admin}
       LOG_LEVEL: INFO
       # service URLs so health/status checks work from within container
       SCAN_SERVICE_URL: http://scan-service:8080
@@ -214,3 +222,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  postgres_data:
