@@ -63,3 +63,17 @@ vendor/
 # Large binaries (already in repo, will be removed)
 frontend/app/node_modules/
 packages/types/node_modules/
+# NextJS Build Cache
+.next/
+*/.next/
+out/
+
+# DAST
+.zap/
+
+# SBOM
+sbom.json
+requirements-freeze.txt
+
+# Temporary build artifacts
+frontend/**/.next/

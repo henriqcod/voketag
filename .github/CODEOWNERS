@@ -1,0 +1,163 @@
+# CODEOWNERS - VokeTag Enterprise Monorepo
+# 
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# This file defines code ownership for the VokeTag monorepo.
+# Each line is a file pattern followed by one or more owners (GitHub users or teams).
+# 
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies code that they own. Order matters - the last matching pattern takes precedence.
+
+#########################
+# Default Global Owner  #
+#########################
+
+# Default owners for everything in the repo unless a later match takes precedence
+* @technical-lead @devops-team
+
+#########################
+# Documentation         #
+#########################
+
+/docs/ @technical-lead @documentation-team
+/README.md @technical-lead
+/CONTRIBUTING.md @technical-lead
+*.md @documentation-team
+
+#########################
+# Backend Services      #
+#########################
+
+# Scan Service (Go 1.22) - Critical latency path
+/services/scan-service/ @backend-go-team @performance-team
+/services/scan-service/**/*.go @backend-go-team
+/services/scan-service/go.mod @backend-go-team @devops-team
+/services/scan-service/Dockerfile @backend-go-team @devops-team
+
+# Factory Service (Python/FastAPI) - Core business logic
+/services/factory-service/ @backend-python-team
+/services/factory-service/**/*.py @backend-python-team
+/services/factory-service/requirements.txt @backend-python-team @devops-team
+/services/factory-service/alembic/ @backend-python-team @database-team
+/services/factory-service/Dockerfile @backend-python-team @devops-team
+
+# Blockchain Service (Python/FastAPI) - Integrity & Anchoring
+/services/blockchain-service/ @backend-python-team @blockchain-team
+/services/blockchain-service/**/*.py @backend-python-team @blockchain-team
+/services/blockchain-service/requirements.txt @backend-python-team @devops-team
+/services/blockchain-service/Dockerfile @backend-python-team @devops-team
+
+# Admin Service (Python/FastAPI) - Governance & Analytics
+/services/admin-service/ @backend-python-team @admin-team
+/services/admin-service/**/*.py @backend-python-team @admin-team
+/services/admin-service/requirements.txt @backend-python-team @devops-team
+/services/admin-service/Dockerfile @backend-python-team @devops-team
+
+#########################
+# Frontend Applications #
+#########################
+
+# Main Consumer App (Next.js 14)
+/frontend/app/ @frontend-team @ux-team
+/frontend/app/**/*.tsx @frontend-team
+/frontend/app/**/*.ts @frontend-team
+
+# Landing Page
+/frontend/landing/ @frontend-team @marketing-team
+/frontend/landing/**/*.tsx @frontend-team @marketing-team
+
+# Factory Frontend
+/frontend/factory/ @frontend-team @factory-team
+/frontend/factory/**/*.tsx @frontend-team @factory-team
+
+# Admin Frontend
+/frontend/admin/ @frontend-team @admin-team
+/frontend/admin/**/*.tsx @frontend-team @admin-team
+
+#########################
+# Shared Packages       #
+#########################
+
+/packages/contracts/ @backend-python-team @backend-go-team @frontend-team
+/packages/types/ @frontend-team @backend-python-team
+/packages/ui/ @frontend-team @ux-team
+
+#########################
+# Infrastructure        #
+#########################
+
+# Docker & Docker Compose
+/infra/docker/ @devops-team @sre-team
+/infra/docker/compose.yml @devops-team @sre-team
+**/Dockerfile @devops-team
+
+# Terraform (IaC)
+/infra/terraform/ @devops-team @sre-team @security-team
+/infra/terraform/**/*.tf @devops-team @sre-team
+
+# CI/CD Pipelines
+/.github/workflows/ @devops-team @sre-team
+/.github/workflows/**/*.yml @devops-team @sre-team
+
+#########################
+# Testing               #
+#########################
+
+/tests/ @qa-team @backend-python-team @backend-go-team
+/tests/e2e/ @qa-team @frontend-team
+/tests/load/ @qa-team @performance-team
+/tests/chaos/ @qa-team @sre-team
+
+#########################
+# Scripts & Automation  #
+#########################
+
+/scripts/ @devops-team
+/scripts/**/*.sh @devops-team
+/scripts/**/*.ps1 @devops-team
+/Makefile @devops-team
+
+#########################
+# Security & Compliance #
+#########################
+
+# Database migrations (requires DBA review)
+**/alembic/ @database-team @backend-python-team
+**/*migration* @database-team @backend-python-team
+
+# SQL schema changes
+**/*.sql @database-team @backend-python-team @backend-go-team
+
+# Security-sensitive files
+.env.example @devops-team @security-team
+**/secrets.yml @devops-team @security-team
+**/security*.py @security-team @backend-python-team
+
+# Dependencies (security audit required)
+requirements.txt @devops-team @security-team
+package.json @devops-team @security-team @frontend-team
+go.mod @devops-team @security-team @backend-go-team
+go.sum @devops-team @security-team @backend-go-team
+
+#########################
+# Configuration         #
+#########################
+
+# GitHub repository settings
+/.github/ @technical-lead @devops-team
+/.github/CODEOWNERS @technical-lead
+
+# Git configuration
+.gitignore @devops-team
+.gitattributes @devops-team
+
+# VSCode settings
+/.vscode/ @technical-lead @devops-team
+
+#########################
+# Special Cases         #
+#########################
+
+# Production deployment files (requires SRE + Tech Lead approval)
+/infra/terraform/environments/prod/ @technical-lead @sre-team @devops-team
+/.github/workflows/deploy.yml @technical-lead @sre-team @devops-team

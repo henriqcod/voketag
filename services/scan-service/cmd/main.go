@@ -12,7 +12,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog"
 
 	"github.com/voketag/scan-service/config"
 	"github.com/voketag/scan-service/internal/antifraud"
@@ -20,7 +19,7 @@ import (
 	"github.com/voketag/scan-service/internal/circuitbreaker"
 	"github.com/voketag/scan-service/internal/events"
 	"github.com/voketag/scan-service/internal/handler"
-	"github.com/voketag/scan-service/internal/metrics"  // LOW ENHANCEMENT: Custom metrics
+	"github.com/voketag/scan-service/internal/metrics" // LOW ENHANCEMENT: Custom metrics
 	"github.com/voketag/scan-service/internal/middleware"
 	"github.com/voketag/scan-service/internal/repository"
 	"github.com/voketag/scan-service/internal/service"
@@ -68,24 +67,24 @@ func main() {
 	// Initialize Redis with production-grade connection pooling
 	// Pool size >= concurrency to prevent blocking under load
 	rdb := cache.NewRedisClient(cache.RedisClientConfig{
-		Addr:            cfg.Redis.Addr,
-		Password:        cfg.Redis.Password,
-		DB:              cfg.Redis.DB,
-		PoolSize:        cfg.Redis.PoolSize,        // Default 100 for concurrency 80
-		MinIdleConns:    cfg.Redis.MinIdleConns,    // Keep warm connections
-		MaxConnAge:      cfg.Redis.MaxConnAge,      // Recycle old connections
-		PoolTimeout:     cfg.Redis.PoolTimeout,     // Fail fast if pool exhausted
-		IdleTimeout:     cfg.Redis.IdleTimeout,     // Close idle connections
-		IdleCheckFreq:   cfg.Redis.IdleCheckFreq,   // Check idle frequency
-		ReadTimeout:     cfg.Redis.Timeout,
-		WriteTimeout:    cfg.Redis.Timeout,
+		Addr:          cfg.Redis.Addr,
+		Password:      cfg.Redis.Password,
+		DB:            cfg.Redis.DB,
+		PoolSize:      cfg.Redis.PoolSize,      // Default 100 for concurrency 80
+		MinIdleConns:  cfg.Redis.MinIdleConns,  // Keep warm connections
+		MaxConnAge:    cfg.Redis.MaxConnAge,    // Recycle old connections
+		PoolTimeout:   cfg.Redis.PoolTimeout,   // Fail fast if pool exhausted
+		IdleTimeout:   cfg.Redis.IdleTimeout,   // Close idle connections
+		IdleCheckFreq: cfg.Redis.IdleCheckFreq, // Check idle frequency
+		ReadTimeout:   cfg.Redis.Timeout,
+		WriteTimeout:  cfg.Redis.Timeout,
 	})
 	cacheClient, err := cache.NewClient(ctx, rdb, log)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init redis")
 	}
 	defer cacheClient.Close()
-	
+
 	// Log initial pool stats for diagnostics
 	log.Info().Msg("redis connected - logging initial pool stats")
 	cacheClient.LogPoolStats()
@@ -143,16 +142,22 @@ func main() {
 
 	mux := http.NewServeMux()
 	scanWithValidation := middleware.ValidateUUID("tag_id")(http.HandlerFunc(scanHandler.Handle))
-	mux.Handle("GET /v1/health", http.HandlerFunc(healthHandler))
-	mux.Handle("GET /v1/ready", readyHandler(repo, rdb))
-	mux.Handle("GET /metrics", promhttp.Handler())
-	mux.Handle("GET /v1/scan/{tag_id}", scanWithValidation)
-	mux.Handle("GET /v1/scan", scanWithValidation)
-	mux.Handle("POST /v1/scan", http.HandlerFunc(scanHandler.Handle))
-	mux.Handle("POST /v1/report", http.HandlerFunc(scanHandler.HandleReport))
+	// Register standard ServeMux-compatible routes
+	mux.HandleFunc("/v1/health", healthHandler)
+	mux.HandleFunc("/v1/ready", readyHandler(repo, rdb))
+	mux.Handle("/metrics", promhttp.Handler())
+
+	// Scan endpoints:
+	// - /v1/scan/ (prefix) will match /v1/scan/{tag_id}
+	// - /v1/scan (exact) will handle POST and query-based GETs
+	mux.Handle("/v1/scan/", scanWithValidation)
+	mux.HandleFunc("/v1/scan", scanHandler.Handle)
+
+	// Fraud report endpoint
+	mux.HandleFunc("/v1/report", scanHandler.HandleReport)
 
 	handlerChain := middleware.Logging(log)(
-		middleware.TraceContext()(  // MEDIUM FIX: Extract trace context from headers
+		middleware.TraceContext()( // MEDIUM FIX: Extract trace context from headers
 			middleware.Timeout(cfg.Server.ContextTimeout)(
 				middleware.RateLimit(100, time.Minute)(
 					mux,
@@ -190,7 +195,7 @@ func main() {
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")  // MINOR FIX: Add Content-Type header
+	w.Header().Set("Content-Type", "application/json") // MINOR FIX: Add Content-Type header
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
 }
@@ -200,7 +205,7 @@ func readyHandler(repo *repository.Repository, rdb *redis.Client) http.HandlerFu
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 
-		w.Header().Set("Content-Type", "application/json")  // MINOR FIX: Add Content-Type header
+		w.Header().Set("Content-Type", "application/json") // MINOR FIX: Add Content-Type header
 
 		if rdb != nil {
 			if err := rdb.Ping(ctx).Err(); err != nil {

@@ -1,0 +1,225 @@
+name: DAST (OWASP ZAP)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dast:
+    name: DAST Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: voketag
+          POSTGRES_PASSWORD: voketag
+          POSTGRES_DB: voketag
+        options: >-
+          --health-cmd "pg_isready -U voketag -d voketag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Start all backend services in background
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Start Factory Service
+        working-directory: services/factory-service
+        run: |
+          pip install -r requirements.txt
+          # Run migrations
+          alembic upgrade head
+          # Start service in background
+          nohup uvicorn main:app --host 0.0.0.0 --port 8081 > /tmp/factory.log 2>&1 &
+          sleep 5
+        env:
+          DATABASE_URL: postgresql+asyncpg://voketag:voketag@localhost:5432/voketag
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Start Admin Service
+        working-directory: services/admin-service
+        run: |
+          pip install -r requirements.txt
+          nohup uvicorn main:app --host 0.0.0.0 --port 8082 > /tmp/admin.log 2>&1 &
+          sleep 5
+        env:
+          DATABASE_URL: postgresql+asyncpg://voketag:voketag@localhost:5432/voketag
+          REDIS_URL: redis://localhost:6379/0
+          JWT_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z3VS5JJcds3s/BqIEYI\nfDx/RsYn4rB32eEjxGH7lmNOWEaXDZf0DP0l1JJvvKQNjq0yCxBDvD5c8V7r/w7N\n51Dv5qLSf7K9J4XJKJqCpI1pEIJYDqKi8XQf8XvWnWqN4I8PF8VqXW0V9ZH8X8U5\n4vXBUvXJv8J8K3L6c5K5V5Z6v8Z6c5K5V5Z6v8Z6c5K5V5Z6v8Z6c5K5V5Z6v8Z6\nQIDw8dV1V5Z6/8Z6c5K5V5Z6v8Z6c5K5V5Z6v8Z6c5J5V5Z6====\n-----END PUBLIC KEY-----"
+
+      - name: Start Blockchain Service
+        working-directory: services/blockchain-service
+        run: |
+          pip install -r requirements.txt
+          nohup uvicorn main:app --host 0.0.0.0 --port 8003 > /tmp/blockchain.log 2>&1 &
+          sleep 5
+        env:
+          DATABASE_URL: postgresql+asyncpg://voketag:voketag@localhost:5432/voketag
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Start Scan Service
+        working-directory: services/scan-service
+        run: |
+          go build -o scan-service ./cmd/main.go
+          nohup ./scan-service > /tmp/scan.log 2>&1 &
+          sleep 5
+        env:
+          DATABASE_URL: postgresql://voketag:voketag@localhost:5432/voketag
+          REDIS_URL: redis://localhost:6379/0
+          PORT: "8080"
+
+      # Wait for services to be ready
+      - name: Wait for services
+        run: |
+          for i in {1..30}; do
+            curl -f http://localhost:8080/v1/health && \
+            curl -f http://localhost:8081/health && \
+            curl -f http://localhost:8082/health && \
+            curl -f http://localhost:8003/health && break || sleep 2
+          done
+
+      # Run OWASP ZAP Baseline Scan
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.7.0
+        with:
+          target: 'http://localhost:8081'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          fail_action: false  # Don't fail on new issues in PR (inform only)
+
+      # Run OWASP ZAP Full Scan (main branch only)
+      - name: OWASP ZAP Full Scan (Production Check)
+        if: github.ref == 'refs/heads/main'
+        uses: zaproxy/action-full-scan@v0.6.0
+        with:
+          target: 'http://localhost:8081'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          fail_action: true  # Fail on critical issues in main
+
+      # Custom ZAP API scanning for authentication
+      - name: ZAP API Scan (Factory Service)
+        uses: zaproxy/action-api-scan@v0.5.0
+        with:
+          target: 'http://localhost:8081'
+          rules_file_name: '.zap/rules.tsv'
+        continue-on-error: true
+
+      # Generate SARIF report for GitHub Security
+      - name: Generate SARIF Report
+        if: always()
+        run: |
+          # Install zaproxy-sarif-converter
+          pip install zaproxy-sarif-converter
+          
+          # Check if ZAP report exists and convert
+          if [ -f "report_html.html" ]; then
+            echo "Converting ZAP HTML report to SARIF..."
+            zaproxy-sarif-converter report_html.html -o zap-report.sarif || true
+          fi
+
+      - name: Upload ZAP Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-results
+          path: |
+            report_html.html
+            zap-report.sarif
+          retention-days: 30
+
+      # Upload to GitHub Security
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: zap-report.sarif
+          category: OWASP-ZAP
+        continue-on-error: true
+
+      # Create security issue if critical vulnerabilities found
+      - name: Report Security Issues
+        if: failure() && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔴 CRITICAL: DAST Security Issues Found',
+              body: `
+                ## OWASP ZAP DAST Scan - Critical Issues
+
+                **Scan Date:** ${new Date().toISOString()}
+                **Branch:** ${context.ref}
+
+                DAST security scan found critical vulnerabilities. Review the [SARIF report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.
+
+                ### Action Items:
+                1. Review security report in GitHub Security tab
+                2. Prioritize critical/high severity issues
+                3. Create bug tickets for remediation
+                4. Re-run scan after fixes
+
+                See: [DAST Setup Guide](docs/DAST_SETUP.md)
+              `,
+              labels: ['security', 'dast', 'critical']
+            })
+
+      # Slack notification for main branch
+      - name: Slack Notification
+        if: always() && github.ref == 'refs/heads/main'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "DAST Scan Result: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*DAST Security Scan* - ${{ job.status }}\n*Branch:* ${{ github.ref }}\n*Commit:* ${{ github.sha }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

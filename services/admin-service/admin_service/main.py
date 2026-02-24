@@ -12,15 +12,38 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
 
 from admin_service.api.routes import auth, users, dashboard, analytics, audit, system, factory, scans, god_mode
 from admin_service.core.auth.csrf import CSRFMiddleware
 from admin_service.core.rate_limit import limiter
+from admin_service.core.middleware import LoggingMiddleware, PerformanceMiddleware, ErrorHandlingMiddleware
 from admin_service.config.settings import settings
-from admin_service.core.logging_config import setup_logging
+from admin_service.core.logging_config import (
+    configure_logging,
+    configure_opentelemetry,
+    get_logger,
+    set_request_context,
+    clear_request_context
+)
 
-# Setup logging
-logger = setup_logging("admin-service", settings.log_level)
+# Setup OpenTelemetry tracing
+configure_opentelemetry(
+    service_name="admin-service",
+    service_version="1.0.0",
+    environment=settings.environment,
+    otlp_endpoint=settings.otlp_endpoint if hasattr(settings, 'otlp_endpoint') else None
+)
+
+# Setup Pino-style logging
+configure_logging(
+    level=settings.log_level,
+    json_logs=settings.environment in ["staging", "production"],
+    service_name="admin-service"
+)
+logger = get_logger(__name__)
 
 
 
@@ -56,13 +79,27 @@ app.add_middleware(SlowAPIMiddleware)
 from prometheus_fastapi_instrumentator import Instrumentator
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
+# OpenTelemetry instrumentation
+try:
+    FastAPIInstrumentor.instrument_app(app)
+    SQLAlchemyInstrumentor().instrument()
+    RedisInstrumentor().instrument()
+    logger.info("OpenTelemetry instrumentation enabled")
+except Exception as e:
+    logger.warning("Failed to initialize OpenTelemetry", error=str(e))
+
+# Structured logging middleware (must be added AFTER others)
+app.add_middleware(ErrorHandlingMiddleware)
+app.add_middleware(PerformanceMiddleware)
+app.add_middleware(LoggingMiddleware)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "x-request-id", "x-correlation-id"],
 )
 # CSRF protection for mutations (POST/PUT/PATCH/DELETE)
 app.add_middleware(CSRFMiddleware)

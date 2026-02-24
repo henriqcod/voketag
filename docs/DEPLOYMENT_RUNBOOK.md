@@ -6,6 +6,80 @@ Complete runbook for deploying VokeTag services to Google Cloud.
 
 ---
 
+## 📊 Disaster Recovery SLA (RTO/RPO)
+
+| Service | RTO | RPO | Recovery Strategy |
+|---------|-----|-----|-------------------|
+| **Scan Service** (Core) | 15 min | 5 min | Multi-region Cloud Run + Firestore backup |
+| **Factory Service** (Payment) | 10 min | 3 min | PostgreSQL replicas + Cloud SQL backup |
+| **Admin Service** (Config) | 30 min | 15 min | Cloud Run + Google Cloud Storage backup |
+| **Blockchain Service** (Audit) | 60 min | 24h | Daily snapshots + Firestore replay |
+| **Database (PostgreSQL)** | 5 min | 1 min | Automated failover to replica (HA) |
+| **Redis Cache** | 2 min | 0 min | Redis replication + AOF (append-only file) |
+| **Secrets (Secret Manager)** | Automatic | Automatic | Google Cloud versioning (30-day retention) |
+
+**Overall Application RTO: 15 minutes | Overall RPO: 5 minutes**
+
+### Recovery Procedures
+
+#### Database Recovery (PostgreSQL HA)
+```bash
+# Automatic failover when primary fails
+# RTO: 5 min (GCP automatic)
+# RPO: 1 min (includes WAL replay)
+
+# Manual recovery if needed
+gcloud sql instances failover DATABASE_NAME --region=us-central1
+
+# Verify replica is now primary
+gcloud sql instances describe DATABASE_NAME | grep status
+```
+
+#### Cloud Run Service Recovery
+```bash
+# RTO: 15 min (redeploy from last image)
+gcloud run deploy SERVICE_NAME \
+  --image=gcr.io/PROJECT/SERVICE:latest \
+  --region=us-central1
+
+# Verify health
+curl https://SERVICE.run.app/health
+```
+
+#### Redis Recovery (AOF)
+```bash
+# RTO: 2 min (restart with persistence)
+# RPO: 0 min (AOF writes synchronously)
+gcloud redis instances failover REDIS_INSTANCE
+
+# Manual recovery
+gcloud redis instances restart REDIS_INSTANCE
+```
+
+#### Secrets Recovery
+```bash
+# Automatic history retention (30 days)
+# RTO: Immediate (versioning enabled by default)
+gcloud secrets versions list SECRET_NAME
+gcloud secrets versions access PREVIOUS_VERSION --secret=SECRET_NAME
+```
+
+### Backup Verification (Weekly)
+
+```bash
+# Test database recovery (shadow database)
+./scripts/test-db-recovery.sh
+
+# Test Cloud Storage restore
+gsutil cp gs://voketag-backups/latest.sql /tmp/
+psql -U postgres -d recovery_test < /tmp/latest.sql
+
+# Verify Redis dump
+redis-cli --latency  # Check replication lag
+```
+
+---
+
 ## Pre-Deployment Checklist
 
 ### Code Quality
